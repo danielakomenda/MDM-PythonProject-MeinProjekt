@@ -2,12 +2,10 @@ import pandas as pd
 import numpy as np
 
 
+collection = "Wetter"
 
-
-async def extract_data_daily(app_state: AppState) -> pd.DataFrame:
+async def extract_data_daily(collection) -> pd.DataFrame:
     """Extract the daily averages of all the interesting datapoints"""
-    
-    collection = app_state.db_client.wetter2
     
     pipeline = [
         {
@@ -57,10 +55,8 @@ async def extract_data_daily(app_state: AppState) -> pd.DataFrame:
     return df
 
 
-async def extract_heatingdemand(app_state: AppState) -> pd.DataFrame:
+async def extract_heatingdemand(collection) -> pd.DataFrame:
     """Extract the daily average of the negative deviation of 14°C = 288°K"""
-    
-    collection = app_state.db_client.wetter2
     
     pipeline = [
         {
@@ -111,10 +107,8 @@ async def extract_heatingdemand(app_state: AppState) -> pd.DataFrame:
     return df
 
 
-async def extract_windpower(app_state: AppState) -> pd.DataFrame:
+async def extract_windpower(collection) -> pd.DataFrame:
     """Extract the daily average of wind-speed**3, which is the equivalent of wind-power"""
-    
-    collection = app_state.db_client.wetter2
     
     pipeline = [
         {

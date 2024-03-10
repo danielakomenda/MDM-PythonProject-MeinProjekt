@@ -1,5 +1,8 @@
+*.DS*
+*.DS_Store*
+
+.env
 .venv
-.DS
-.DS_Store
+.ipynb*
 __pycache__
 credentials.yaml

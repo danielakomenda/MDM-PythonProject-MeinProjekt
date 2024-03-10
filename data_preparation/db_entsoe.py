@@ -1,6 +1,8 @@
 import pandas as pd
 
 
+collection = "Energie"
+
 
 db_field_projection = {
     'wind': '$Wind Onshore Generation', 
@@ -12,10 +14,10 @@ db_field_projection = {
 }
 
 
-async def extract_energy_data_daily(app_state: AppState) -> pd.DataFrame:
+async def extract_energy_data_daily(collection) -> pd.DataFrame:
     """Extract the daily average of all the data"""
 
-    collection = app_state.db_client.entsoe
+
 
     pipeline = [{
         '$addFields': {
@@ -46,10 +48,8 @@ async def extract_energy_data_daily(app_state: AppState) -> pd.DataFrame:
     return df
 
 
-async def extract_energy_data_raw(app_state: AppState) -> pd.DataFrame:
+async def extract_energy_data_raw(collection) -> pd.DataFrame:
     """Extract all the data"""
-
-    collection = app_state.db_client.entsoe
     
     projection = {
         '_id': False,

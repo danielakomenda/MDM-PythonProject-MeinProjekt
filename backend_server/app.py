@@ -11,12 +11,11 @@ import markupsafe
 import bokeh.embed
 import pandas
 
-
 from data_preparation.db_entsoe import *
 from data_preparation.db_wetter2 import *
-from data_visuals.weather_historic_plots import weather_overview_plot
-from data_visuals.energy_historic_plots import *
-from data_visuals.prediction_plots import *
+from data_visuals.plots_wetter2_historic import *
+from data_visuals.plots_entsoe_historic import *
+from data_visuals.plots_prediction import *
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
