@@ -138,7 +138,23 @@ async def scraping():
     df_to_insert = pd.concat(collected_dfs)
 
     print("all data scraped, ready to insert in db")
-    insert_data_to_db(collection, df_to_insert)
+    
+    try:
+        insert_data_to_db(collection, df_to_insert)
+    except pymongo.errors.BulkWriteError as ex:
+        result = dict(ex.details)
+        write_errors = result.pop("writeErrors",[])
+        ok = all(err.get("code") == 11000 for err in write_errors)
+        ok = ok and not result.get("writeConcernErrors")
+        n_success = result['nInserted']
+        n_duplicate = len(write_errors)
+        ok = ok and (n_success + n_duplicate) == df_to_insert.shape[0]
+        if ok:
+            print(f"Discarded {n_duplicate} inserts due to duplicate keys, inserted {n_success} documents.")
+        else:
+            had_write_concern = len(result.get("writeConcernErrors",[]))
+            not_discarded = sum(err.get("code") != 11000 for err in write_errors)
+            raise RuntimeError(f"Unexpected error; {n_duplicate=} {n_success=} {df_to_insert.shape[0]=} {had_write_concern=} {not_discarded=}")
 
 
 if __name__ == "__main__":
