@@ -207,7 +207,7 @@ def insert_data_to_db(collection, df):
     )
 
 
-async def scraping():
+async def scraping(locations):
     """Run the program: Scraping the website, Insert it to DB"""
 
     collection = connect_to_db()
@@ -232,4 +232,4 @@ async def scraping():
 
 
 if __name__ == "__main__":
-    asyncio.run(scraping())
+    asyncio.run(scraping(locations))
