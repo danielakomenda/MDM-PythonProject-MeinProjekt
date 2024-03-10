@@ -1,0 +1,20 @@
+name: Scraper-Entsoe
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 22 * * *"
+
+jobs: 
+  InsertWeatherDataToDB:
+    runs-on: ubuntu-latest
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m data_preparation.scraper_entsoe
