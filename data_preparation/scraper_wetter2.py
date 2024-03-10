@@ -207,7 +207,7 @@ def insert_data_to_db(collection, df):
     )
 
 
-async def scraping(locations):
+async def scraping():
     """Run the program: Scraping the website, Insert it to DB"""
 
     collection = connect_to_db()
