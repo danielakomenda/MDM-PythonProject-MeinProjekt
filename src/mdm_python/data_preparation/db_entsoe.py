@@ -43,7 +43,8 @@ def extract_daily_average_energy():
         results.append(x)
 
     df = pd.DataFrame(results)
-    df = df.set_index("_id")
+    df = df.set_index(("_id"))
+    df = df.set_index(pd.to_datetime(df.index).rename("date").tz_localize("UTC"))
     df = df.sort_index()
     df["total"] = df.sum(axis="columns")
 

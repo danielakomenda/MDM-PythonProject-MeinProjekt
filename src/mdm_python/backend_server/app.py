@@ -13,8 +13,8 @@ import pandas
 
 from data_preparation.db_entsoe import *
 from data_preparation.db_wetter2 import *
-from data_visuals.plots_wetter2_historic import *
-from data_visuals.plots_entsoe_historic import *
+from data_visuals.plots_wetter2 import *
+from data_visuals.plots_entsoe import *
 from data_visuals.plots_prediction import *
 
 
