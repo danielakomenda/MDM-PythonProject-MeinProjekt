@@ -2,8 +2,8 @@ import pandas as pd
 import sklearn.cross_decomposition
 import sklearn.linear_model
 
-import data_preparation.db_entsoe as entsoe_data
-import data_preparation.db_wetter2 as wetter2_data
+import data.db_entsoe as entsoe_data
+import data.db_wetter2 as wetter2_data
 
 
 async def prepare_input_features_daily(app_state):

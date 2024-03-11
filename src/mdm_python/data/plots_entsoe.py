@@ -8,7 +8,7 @@ import bokeh.layouts
 import bokeh.embed
 import bokeh.io
 
-import mdm_python.data_preparation.db_entsoe as db
+import mdm_python.data.db_entsoe as db
 
 
 daily_results = db.extract_daily_average_energy()

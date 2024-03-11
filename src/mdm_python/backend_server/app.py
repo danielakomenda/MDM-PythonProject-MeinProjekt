@@ -11,11 +11,11 @@ import markupsafe
 import bokeh.embed
 import pandas
 
-from data_preparation.db_entsoe import *
-from data_preparation.db_wetter2 import *
-from data_visuals.plots_wetter2 import *
-from data_visuals.plots_entsoe import *
-from data_visuals.plots_prediction import *
+from data.db_entsoe import *
+from data.db_wetter2 import *
+from mdm_python.data.plots_wetter2 import *
+from mdm_python.data.plots_entsoe import *
+from mdm_python.data.plots_prediction import *
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
