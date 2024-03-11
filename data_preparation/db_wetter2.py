@@ -1,178 +1,52 @@
+import os
+import dotenv
+
+import pymongo
 import pandas as pd
-import numpy as np
 
 
-collection = "Wetter"
+def connect_to_db():
+    """Open the connection to the DB and return the collection
+    Create collection with unique index, if there is not yet one"""
+    # Load environment variables from .env file
+    dotenv.load_dotenv()
 
-async def extract_data_daily(collection) -> pd.DataFrame:
-    """Extract the daily averages of all the interesting datapoints"""
-    
+    # Get MongoDB-URI
+    mongodb_uri = os.getenv("MONGODB_URI")
+    DBclient = pymongo.MongoClient(mongodb_uri)
+    db = DBclient["MDM-Python-MeinProjekt"]
+
+    return db["Wetter"]
+
+
+def extract_daily_average_weather():
+
+    collection = connect_to_db()
+
     pipeline = [
+        {"$addFields": {"date": {"$substr": ["$datetime", 0, 10]}}},
         {
-            '$addFields': {
-                'date': {
-                    '$substr': [
-                        '$datetime', 0, 10
-                    ]
-                }
+            "$group": {
+                "_id": "$date",
+                "avg_temp": {"$avg": "$temp_C"},
+                "min_temp": {"$min": "$temp_C"},
+                "max_temp": {"$max": "$temp_C"},
+                "rain": {"$avg": "$rain_mm"},
+                "wind_speed": {"$avg": "$wind_kmh"},
+                "clouds": {"$avg": "$cloud_percent"},
             }
-        }, 
-        {
-            '$group': {
-                '_id': '$date', 
-                'avg_temp': {
-                    '$avg': '$temp_C'
-                }, 
-                'min_temp': {
-                    '$min': '$temp_C'
-                }, 
-                'max_temp': {
-                    '$max': '$temp_C'
-                }, 
-                'rain': {
-                    '$avg': '$rain_mm'
-                }, 
-                'wind_speed': {
-                    '$avg': '$wind_kmh'
-                }, 
-                'clouds': {
-                    '$avg': '$cloud_percent'
-                }
-            }
-        }
+        },
     ]
 
     results = []
-    async for x in collection.aggregate(pipeline):
+    for x in collection.aggregate(pipeline):
         results.append(x)
-    
+
     df = pd.DataFrame(results)
     df = df.set_index("_id")
-    df = df.set_index(pd.to_datetime(df.index).tz_localize("UTC").rename("date"))
     df = df.sort_index()
+    df.index = df.index.rename("date")
     df["wind_speed"] /= 3.6
-    
+    df["wind_power"] = df["wind_speed"] ** 3
+
     return df
-
-
-async def extract_heatingdemand(collection) -> pd.DataFrame:
-    """Extract the daily average of the negative deviation of 14°C = 288°K"""
-    
-    pipeline = [
-        {
-            '$addFields': {
-                'heatingdemand': {
-                    '$cond': {
-                        'if': {
-                            '$lte': [
-                                '$temp_C', 14
-                            ]
-                        }, 
-                        'then': {
-                            '$subtract': [
-                                14, '$temp_C'
-                            ]
-                        }, 
-                        'else': 0
-                    }
-                }
-            }
-        }, {
-            '$addFields': {
-                'date': {
-                    '$substr': [
-                        '$datetime', 0, 10
-                    ]
-                }
-            }
-        }, {
-            '$group': {
-                '_id': '$date', 
-                'heating_demand': {
-                    '$avg': '$heatingdemand'
-                }
-            }
-        }
-    ]
-
-    results = []
-    async for x in collection.aggregate(pipeline):
-        results.append(x)
-    
-    df = pd.DataFrame(results)
-    df = df.set_index("_id")
-    df = df.set_index(pd.to_datetime(df.index).tz_localize("UTC").rename("date"))
-    df = df.sort_index()
-    
-    return df
-
-
-async def extract_windpower(collection) -> pd.DataFrame:
-    """Extract the daily average of wind-speed**3, which is the equivalent of wind-power"""
-    
-    pipeline = [
-        {
-            '$addFields': {
-                'date': {
-                    '$substr': [
-                        '$datetime', 0, 10
-                    ]
-                }
-            }
-        }, {
-            '$group': {
-                '_id': '$date', 
-                'windpower': {
-                    '$avg': {
-                        '$pow': [
-                            {
-                                '$divide': [
-                                    "$wind_kmh", 3.6
-                                ]
-                            }, 3]
-                    }
-                }
-            }
-        }
-    ]
-
-    results = []
-    async for x in collection.aggregate(pipeline):
-        results.append(x)
-    
-    df = pd.DataFrame(results)
-    df = df.set_index("_id")
-    df = df.set_index(pd.to_datetime(df.index).tz_localize("UTC").rename("date"))
-    df = df.sort_index()
-    
-    return df
-
-
-
-
-def total_solarpower_below_clouds(data, lat):
-    """Calculates the relative daily solar-power above clouds
-    at a given date and geographical latitude;
-
-    lat: latitude in degrees
-    date: pandas.DatetimeIndex
-    """
-
-    day_of_year = data.index.day_of_year
-
-    delta = 23.45 * np.pi / 180 * np.sin(2 * np.pi / 365 * (284 + np.array(day_of_year)))[:, None]
-    psi = lat * np.pi / 180
-    H = np.linspace(-np.pi, np.pi, 48, endpoint=False)
-
-    sin_theta = np.sin(delta) * np.sin(psi) + np.cos(delta) * np.cos(psi) * np.cos(H)
-
-    power_above_clouds = pd.Series(
-        index=data.index,
-        data=np.maximum(0, sin_theta).mean(1),
-    )
-
-    power_above_clouds *= np.pi  # normalize to 1 at equator
-
-    power_below_clouds = power_above_clouds * (100 - data.clouds) / 100
-
-    return power_below_clouds

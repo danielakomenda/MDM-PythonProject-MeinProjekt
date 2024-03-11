@@ -1,64 +1,71 @@
+import os
+import dotenv
+
+import pymongo
 import pandas as pd
 
 
-collection = "Energie"
+def connect_to_db():
+    """Open the connection to the DB and return the collection
+    Create collection with unique index, if there is not yet one"""
+    # Load environment variables from .env file
+    dotenv.load_dotenv()
+
+    # Get MongoDB-URI
+    mongodb_uri = os.getenv("MONGODB_URI")
+    DBclient = pymongo.MongoClient(mongodb_uri)
+    db = DBclient["MDM-Python-MeinProjekt"]
+
+    return db["Energie"]
 
 
-db_field_projection = {
-    'wind': '$Wind Onshore Generation', 
-    'solar': '$Solar Generation', 
-    'nuclear': '$Nuclear Generation', 
-    'water_reservoir': '$Hydro Water Reservoir Generation', 
-    'water_river': '$Hydro Run-of-river and poundage Generation', 
-    'water_pump': '$Hydro Pumped Storage Generation',   
-}
+def extract_daily_average_energy():
 
+    collection = connect_to_db()
 
-async def extract_energy_data_daily(collection) -> pd.DataFrame:
-    """Extract the daily average of all the data"""
-
-
-
-    pipeline = [{
-        '$addFields': {
-            'date': {
-                '$substr': [
-                    '$datetime', 0, 10
-                ]
+    pipeline = [
+        {"$addFields": {"date": {"$substr": ["$datetime", 0, 10]}}},
+        {
+            "$group": {
+                "_id": "$date",
+                "wind": {"$avg": "$Wind Onshore Generation"},
+                "solar": {"$avg": "$Solar Generation"},
+                "nuclear": {"$avg": "$Nuclear Generation"},
+                "water_reservoir": {"$avg": "$Hydro Water Reservoir Generation"},
+                "water_river": {"$avg": "$Hydro Run-of-river and poundage Generation"},
+                "water_pump": {"$avg": "$Hydro Pumped Storage Generation"},
             }
-        }
-    }, {
-        '$group': {
-            '_id': '$date', 
-            **{k: {'$avg': v} for k, v in db_field_projection.items()},
-        }
-    }
+        },
     ]
 
     results = []
-    async for x in collection.aggregate(pipeline):
+    for x in collection.aggregate(pipeline):
         results.append(x)
-    
+
     df = pd.DataFrame(results)
     df = df.set_index("_id")
-    df = df.set_index(pd.to_datetime(df.index).rename("date").tz_localize("UTC"))
     df = df.sort_index()
     df["total"] = df.sum(axis="columns")
 
     return df
 
 
-async def extract_energy_data_raw(collection) -> pd.DataFrame:
-    """Extract all the data"""
-    
+def extract_daily_raw_energy():
+    collection = connect_to_db()
+
     projection = {
-        '_id': False,
-        'datetime': "$datetime",
-        **db_field_projection,
+        "_id": False,
+        "datetime": "$datetime",
+        "wind": "$Wind Onshore Generation",
+        "solar": "$Solar Generation",
+        "nuclear": "$Nuclear Generation",
+        "water_reservoir": "$Hydro Water Reservoir Generation",
+        "water_river": "$Hydro Run-of-river and poundage Generation",
+        "water_pump": "$Hydro Pumped Storage Generation",
     }
 
-    results = await collection.find(projection=projection).to_list(None)
-    
+    results = collection.find(projection=projection)
+
     df = pd.DataFrame(results)
     df = df.set_index("datetime")
     df = df.set_index(pd.to_datetime(df.index))
