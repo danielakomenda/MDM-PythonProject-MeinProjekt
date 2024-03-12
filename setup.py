@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 
-# File to install the project as a Library
 
 setup(
     name='mdm-python',
