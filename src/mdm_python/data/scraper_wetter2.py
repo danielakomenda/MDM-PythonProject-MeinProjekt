@@ -9,6 +9,9 @@ import bs4
 import pandas as pd
 
 
+end_date = datetime.date.today() - datetime.timedelta(days=1)
+start_date = end_date - datetime.timedelta(days=3)
+
 # 36 Locations in Switzerland
 locations = {
     "Aarau,Switzerland": "5a5ecc58df562835e3fcbae5f8c52e64e7247918",
@@ -174,9 +177,6 @@ async def scrape_website_data(locations, year:int, month:int, day:int) -> pd.Dat
 
 async def scraping():
     """Run the program: Scraping the website"""
-
-    end_date = datetime.date.today() - datetime.timedelta(days=1)
-    start_date = end_date - datetime.timedelta(days=4)
     
     date = pd.date_range(start_date, end_date, freq="D")
 
@@ -232,10 +232,19 @@ async def inserting_raw_data(df_to_insert):
 
 
 def transform_hourly_weather():
+    """Find all hourly Weather-Data from the defined date-range.
+    Summarize the data to daily averages."""
 
     collection = connect_to_db_Wetter()
-    
+
+    start_datetime = datetime.datetime.combine(start_date, datetime.datetime.min.time()).replace(tzinfo=datetime.timezone.utc)
+
     pipeline = [
+        {
+            "$match": {
+                "datetime": {"$gt": start_datetime}
+            }
+        },
         {
             '$addFields': {
                 'date': {
@@ -286,8 +295,8 @@ def transform_hourly_weather():
 
 
 def insert_transformed_data(df):
-    """Insert the data to the collection; if there is already a data-set with the same location and time,
-    an Error is raised, but the rest of the inserts will carry on"""
+    """Insert the data to the collection;
+    if there is already a data-set with the same date, the data is updated"""
     
     collection = connect_to_db_Wetter_Durchschnitt()
     

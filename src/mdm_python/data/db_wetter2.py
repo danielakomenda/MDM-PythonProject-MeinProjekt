@@ -24,7 +24,7 @@ def connect_to_db_Wetter_Durchschnitt():
         return collection
     
 
-def extract_average_weather():
+def extract_daily_average_weather():
 
     collection = connect_to_db_Wetter_Durchschnitt()
     
