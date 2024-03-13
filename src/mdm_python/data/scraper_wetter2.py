@@ -119,7 +119,7 @@ async def scrape_website_data(locations, year:int, month:int, day:int) -> pd.Dat
 
             # Error, if the result is not in the form of a dictionary
             if not isinstance(result_years, dict):
-                raise ValueError(f"Cannot parse data for {day=} {month=}: {str(res_years)[:50]}...")
+                raise ValueError(f"Cannot parse data for {day=} {month=}: {str(result_years)[:50]}...")
 
             for k, v in result_years.items():
                 if int(k)!=year:
