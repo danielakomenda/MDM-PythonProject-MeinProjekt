@@ -5,45 +5,52 @@ import pymongo
 import pandas as pd
 
 
-def connect_to_db():
-    """Open the connection to the DB and return the collection
-    Create collection with unique index, if there is not yet one"""
+def connect_to_db_Wetter_Durchschnitt():
     # Load environment variables from .env file
     dotenv.load_dotenv()
-
+    
     # Get MongoDB-URI
     mongodb_uri = os.getenv("MONGODB_URI")
     DBclient = pymongo.MongoClient(mongodb_uri)
     db = DBclient["MDM-Python-MeinProjekt"]
 
-    return db["Wetter"]
+    if "Wetter_Durchschnitt" in db.list_collection_names():
+        return db["Wetter_Durchschnitt"]
+    else:
+        collection = db["Wetter_Durchschnitt"]
+        collection.create_index([
+            ("date", pymongo.ASCENDING),
+        ], unique=True)
+        return collection
+    
 
+def extract_average_weather():
 
-def extract_daily_average_weather():
-
-    collection = connect_to_db()
-
+    collection = connect_to_db_Wetter_Durchschnitt()
+    
     pipeline = [
-        {"$addFields": {"date": {"$substr": ["$datetime", 0, 10]}}},
-        {
-            "$group": {
-                "_id": "$date",
-                "avg_temp": {"$avg": "$temp_C"},
-                "rain": {"$avg": "$rain_mm"},
-                "wind_speed": {"$avg": "$wind_kmh"},
-                "clouds": {"$avg": "$cloud_percent"},
-            }
+      {
+        '$project': {
+          '_id': False,
+          'date': "$date",
+          'avg_temp': "$avg_temp",
+          'min_temp': "$min_temp",
+          'max_temp': "$max_temp",
+          'rain': "$rain",
+          'wind_speed': "$wind_speed",
+          'clouds': "clouds",
         },
+      },
     ]
-
+    
+    
     results = []
     for x in collection.aggregate(pipeline):
         results.append(x)
-
+    
     df = pd.DataFrame(results)
-    df = df.set_index("_id")
-    df = df.set_index(pd.to_datetime(df.index).rename("date").tz_localize("UTC"))
+    df = df.set_index("date")
+    df = df.set_index(pd.to_datetime(df.index).tz_localize("UTC"))
     df = df.sort_index()
-    df["wind_speed"] /= 3.6
 
     return df
