@@ -50,13 +50,10 @@ locations = {
 }
 
 
-def connect_to_db():
-    """Open the connection to the DB and return the collection
-    Create collection with unique index, if there is not yet one"""
-
+def connect_to_db_Wetter():
     # Load environment variables from .env file
     dotenv.load_dotenv()
-
+    
     # Get MongoDB-URI
     mongodb_uri = os.getenv("MONGODB_URI")
     DBclient = pymongo.MongoClient(mongodb_uri)
@@ -66,26 +63,40 @@ def connect_to_db():
         return db["Wetter"]
     else:
         collection = db["Wetter"]
-        # Create unique indexes based on the combination of location and datetime
-        collection.create_index(
-            [
-                ("location", pymongo.ASCENDING),
-                ("datetime", pymongo.ASCENDING),
-            ],
-            unique=True,
-        )
+        collection.create_index([
+            ("location", pymongo.ASCENDING),
+            ("datetime", pymongo.ASCENDING),
+        ], unique=True)
         return collection
 
 
-async def scrape_website_data(
-    locations, year: int, month: int, day: int
-) -> pd.DataFrame:
+def connect_to_db_Wetter_Durchschnitt():
+    # Load environment variables from .env file
+    dotenv.load_dotenv()
+    
+    # Get MongoDB-URI
+    mongodb_uri = os.getenv("MONGODB_URI")
+    DBclient = pymongo.MongoClient(mongodb_uri)
+    db = DBclient["MDM-Python-MeinProjekt"]
+
+    if "Wetter_Durchschnitt" in db.list_collection_names():
+        return db["Wetter_Durchschnitt"]
+    else:
+        collection = db["Wetter_Durchschnitt"]
+        collection.create_index([
+            ("date", pymongo.ASCENDING),
+        ], unique=True)
+        return collection
+
+
+
+async def scrape_website_data(locations, year:int, month:int, day:int) -> pd.DataFrame:
     """Access the website with the needed parameters; return a PandasDataFrame"""
 
     results = []
-
+    
     for location, authority in locations.items():
-
+    
         async with httpx.AsyncClient() as client:
             result = await client.post(
                 url="https://www.wetter2.com/v1/past-weather/",
@@ -97,130 +108,112 @@ async def scrape_website_data(
                     "place": location,
                     "day": day,
                     "month": month,
-                    "city": location.split(",")[0].replace("_", " "),
-                    "country": location.split(",")[1],
-                    "language": "german",
+                    "city": location.split(',')[0].replace('_', ' '),
+                    "country": location.split(',')[1],
+                    "language": "german"
                 },
             )
             result.raise_for_status()
             result_json = result.json()
-            result_years = result_json["data"]["years"]
+            result_years = result_json['data']['years']
 
             # Error, if the result is not in the form of a dictionary
             if not isinstance(result_years, dict):
-                raise ValueError(
-                    f"Cannot parse data for {day=} {month=}: {str(result_years)[:50]}..."
-                )
+                raise ValueError(f"Cannot parse data for {day=} {month=}: {str(res_years)[:50]}...")
 
             for k, v in result_years.items():
-                if int(k) != year:
+                if int(k)!=year:
                     continue
                 date = datetime.date(year=year, month=month, day=day)
                 if v.get("table") is None:
                     continue
                 res_table = v["table"]
-
+    
                 soup = bs4.BeautifulSoup(res_table)
                 head = soup.table.thead
-
+    
                 # Create Index
                 timestamps = []
                 for td in head.find_all("td"):
-                    dt = datetime.datetime.combine(
-                        date, datetime.time.fromisoformat(td.text)
-                    )
+                    dt = datetime.datetime.combine(date, datetime.time.fromisoformat(td.text))
                     dt = pd.Timestamp(dt).tz_localize("UTC")
                     timestamps.append(dt)
-                index = pd.MultiIndex.from_frame(
-                    pd.DataFrame(data={"location": location, "datetime": timestamps})
-                )
-
+                index = pd.MultiIndex.from_frame(pd.DataFrame(data={"location": location, "datetime": timestamps}))
+    
+    
                 # Get the data of the html-body and create a dictionary with Temperature, Rain, Wind and Cloudiness
                 body = soup.table.tbody
                 data = dict(
-                    temp_C=[
-                        float(span["data-temp"])
-                        for span in body.find(
-                            "th", string="Temperatur"
-                        ).parent.find_all("span", class_="day_temp")
-                    ],
-                    rain_mm=[
-                        float(span["data-length"])
-                        for span in body.find(
-                            "th", string="Niederschlag"
-                        ).parent.find_all("span", attrs={"data-length": True})
-                    ],
-                    wind_kmh=[
-                        float(span["data-wind"])
-                        for span in body.find("th", string="Wind").parent.find_all(
-                            "span", class_="day_wind"
-                        )
-                    ],
-                    cloud_percent=[
-                        float(td.text.strip("%"))
-                        for td in body.find("th", string="Wolkendecke").parent.find_all(
-                            "td"
-                        )
-                    ],
+                    temp_C=[float(span["data-temp"]) for span in body.find("th", string="Temperatur").parent.find_all("span", class_="day_temp")],
+                    rain_mm=[float(span["data-length"]) for span in body.find("th", string="Niederschlag").parent.find_all("span", attrs={"data-length": True})],
+                    wind_kmh=[float(span["data-wind"]) for span in body.find("th", string="Wind").parent.find_all("span", class_="day_wind")],
+                    cloud_percent=[float(td.text.strip("%")) for td in body.find("th", string="Wolkendecke").parent.find_all("td")]                                         
                 )
 
                 result = pd.DataFrame(data=data, index=index)
                 results.append(result)
 
-    if results:
+
+    if results: 
         # Concate the list-entries to a Dataframe
         return pd.concat(results)
-
+    
     else:
         # Return empty dataframe, if there is no data
         data = dict(
-            location=pd.Series([], dtype=str),
-            datetime=pd.Series([], dtype="M8[ns]"),  # M8 is Timestamp
+            location = pd.Series([], dtype=str),
+            datetime = pd.Series([], dtype="M8[ns]"), # M8 is Timestamp
             temp_C=pd.Series([], dtype=float),
             rain_mm=pd.Series([], dtype=float),
             wind_kmh=pd.Series([], dtype=float),
-            cloud_percent=pd.Series([], dtype=float),
+            cloud_percent=pd.Series([], dtype=float),                                        
         )
         return pd.DataFrame(data=data).set_index(["location", "datetime"])
-
-
-def insert_data_to_db(collection, df):
-    """Insert the data to the collection; if there is already a data-set with the same location and time,
-    an Error is raised, but the rest of the inserts will carry on"""
-
-    data = df.reset_index().to_dict("records")
-
-    collection.insert_many(
-        data,
-        ordered=False,
-    )
+    
 
 
 async def scraping():
-    """Run the program: Scraping the website, Insert it to DB"""
+    """Run the program: Scraping the website"""
 
-    collection = connect_to_db()
     end_date = datetime.date.today() - datetime.timedelta(days=1)
-    start_date = end_date - datetime.timedelta(days=3)
-
+    start_date = end_date - datetime.timedelta(days=4)
+    
     date = pd.date_range(start_date, end_date, freq="D")
 
     collected_dfs = []
-
+    
     for d in date:
-        print(f"Working on {d.year}-{d.month}-{d.day}")
-        df = await scrape_website_data(
-            locations=locations, year=d.year, month=d.month, day=d.day
-        )
-        collected_dfs.append(df)
-
-    df_to_insert = pd.concat(collected_dfs)
+        print(f'Working on {d.year}-{d.month}-{d.day}')
+        try:
+            df = await scrape_website_data(locations=locations, year=d.year, month=d.month, day=d.day)
+            collected_dfs.append(df)
+        except Exception as ex:
+            print(f'Problem with {d.year}-{d.month}-{d.day}')
+            pass
+            
+    df_to_insert = pd.concat(collected_dfs)  
 
     print("all data scraped, ready to insert in db")
 
-    try:
-        insert_data_to_db(collection, df_to_insert)
+    return df_to_insert
+
+
+
+async def inserting_raw_data(df_to_insert):
+    """Run the program: Insert the data to the collection;
+    if there is already a data-set with the same location and time,
+    an error is raised and ignored, but the rest of the inserts will carry on"""
+
+    collection = connect_to_db_Wetter()
     
+    try:
+        data = df_to_insert.reset_index().to_dict("records")
+
+        collection.insert_many(
+            data,
+            ordered=False,
+        )
+        
     except pymongo.errors.BulkWriteError as ex:
         result = dict(ex.details)
         write_errors = result.pop("writeErrors",[])
@@ -237,5 +230,88 @@ async def scraping():
             raise RuntimeError(f"Unexpected error; {n_duplicate=} {n_success=} {df_to_insert.shape[0]=} {had_write_concern=} {not_discarded=}")
 
 
+
+def transform_hourly_weather():
+
+    collection = connect_to_db_Wetter()
+    
+    pipeline = [
+        {
+            '$addFields': {
+                'date': {
+                    '$substr': [
+                        '$datetime', 0, 10
+                    ]
+                }
+            }
+        }, 
+        {
+            '$group': {
+                '_id': '$date', 
+                'avg_temp': {
+                    '$avg': '$temp_C'
+                }, 
+                'min_temp': {
+                    '$min': '$temp_C'
+                }, 
+                'max_temp': {
+                    '$max': '$temp_C'
+                }, 
+                'rain': {
+                    '$avg': '$rain_mm'
+                }, 
+                'wind_speed': {
+                    '$avg': '$wind_kmh'
+                }, 
+                'clouds': {
+                    '$avg': '$cloud_percent'
+                }
+            }
+        }
+    ]
+    
+    
+    results = []
+    for x in collection.aggregate(pipeline):
+        results.append(x)
+    
+    df = pd.DataFrame(results)
+    df = df.set_index("_id")
+    df = df.sort_index()
+    df.index = df.index.rename("date")
+    df["wind_speed"] /= 3.6
+
+    return df
+
+
+
+def insert_transformed_data(df):
+    """Insert the data to the collection; if there is already a data-set with the same location and time,
+    an Error is raised, but the rest of the inserts will carry on"""
+    
+    collection = connect_to_db_Wetter_Durchschnitt()
+    
+    data = df.reset_index().to_dict("records")
+
+    bulk_operations = []
+    
+    for d in data:
+        filter_query = {"date": d["date"]}
+        update_query = {"$set": d}
+        bulk_operations.append(pymongo.UpdateOne(filter_query, update_query, upsert=True))
+    
+    if bulk_operations:
+        collection.bulk_write(bulk_operations)
+
+
+
+async def main():
+    df_raw = await scraping()
+    await inserting_raw_data(df_raw)
+    df_transformed = transform_hourly_weather()
+    insert_transformed_data(df_transformed)
+
+
+
 if __name__ == "__main__":
-    asyncio.run(scraping())
+    asyncio.run(main())

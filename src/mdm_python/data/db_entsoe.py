@@ -28,12 +28,12 @@ def extract_daily_average_energy():
         {
             "$group": {
                 "_id": "$date",
-                "wind": {"$avg": "$Wind Onshore Generation"},
-                "solar": {"$avg": "$Solar Generation"},
-                "nuclear": {"$avg": "$Nuclear Generation"},
-                "water_reservoir": {"$avg": "$Hydro Water Reservoir Generation"},
-                "water_river": {"$avg": "$Hydro Run-of-river and poundage Generation"},
-                "water_pump": {"$avg": "$Hydro Pumped Storage Generation"},
+                "wind_power": {"$avg": "$Wind Onshore Generation"},
+                "solar_power": {"$avg": "$Solar Generation"},
+                "nuclear_power": {"$avg": "$Nuclear Generation"},
+                "water_reservoir_power": {"$avg": "$Hydro Water Reservoir Generation"},
+                "water_river_power": {"$avg": "$Hydro Run-of-river and poundage Generation"},
+                "water_pump_power": {"$avg": "$Hydro Pumped Storage Generation"},
             }
         },
     ]

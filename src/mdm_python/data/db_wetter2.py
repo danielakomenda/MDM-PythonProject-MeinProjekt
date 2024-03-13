@@ -29,8 +29,6 @@ def extract_daily_average_weather():
             "$group": {
                 "_id": "$date",
                 "avg_temp": {"$avg": "$temp_C"},
-                "min_temp": {"$min": "$temp_C"},
-                "max_temp": {"$max": "$temp_C"},
                 "rain": {"$avg": "$rain_mm"},
                 "wind_speed": {"$avg": "$wind_kmh"},
                 "clouds": {"$avg": "$cloud_percent"},
@@ -44,9 +42,8 @@ def extract_daily_average_weather():
 
     df = pd.DataFrame(results)
     df = df.set_index("_id")
+    df = df.set_index(pd.to_datetime(df.index).rename("date").tz_localize("UTC"))
     df = df.sort_index()
-    df.index = df.index.rename("date")
     df["wind_speed"] /= 3.6
-    df["wind_power"] = df["wind_speed"] ** 3
 
     return df
