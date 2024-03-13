@@ -17,4 +17,4 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r requirements.txt
-      - run: python -m src.mdm_python.data.scraper_entsoe
+      - run: python -m src.mdm_python.data.scraper_wetter2
