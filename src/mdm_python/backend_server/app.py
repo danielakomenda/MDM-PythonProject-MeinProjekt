@@ -41,23 +41,6 @@ def web_page(page):
     )
 
 
-@app.get('/pages/model')
-async def weather_features():
-    weather_table = pd.read_csv(app.root_path/"assets/weatherfeatures.csv").to_html(index=False)
-    energy_table = pd.read_csv(app.root_path / "assets/energyfeatures.csv").to_html(index=False)
-    x_weights_table = pd.read_csv(app.root_path / "assets/x_weights.csv").to_html(index=False)
-    y_weights_table = pd.read_csv(app.root_path / "assets/y_weights.csv").to_html(index=False)
-
-
-    return await render_template(
-        "model.html",
-        resources=markupsafe.Markup(bokeh.resources.CDN.render()),
-        weather_table_html=markupsafe.Markup(weather_table),
-        energy_table_html=markupsafe.Markup(energy_table),
-        x_weights_table_html=markupsafe.Markup(x_weights_table),
-        y_weights_table_html=markupsafe.Markup(y_weights_table),
-    )
-
 
 @app.get('/Historic-Energy-Production')
 @cache.cached()
@@ -119,6 +102,27 @@ async def weather_historic():
 
 
 """
+
+
+@app.get('/pages/model')
+async def weather_features():
+    weather_table = pd.read_csv(app.root_path/"assets/weatherfeatures.csv").to_html(index=False)
+    energy_table = pd.read_csv(app.root_path / "assets/energyfeatures.csv").to_html(index=False)
+    x_weights_table = pd.read_csv(app.root_path / "assets/x_weights.csv").to_html(index=False)
+    y_weights_table = pd.read_csv(app.root_path / "assets/y_weights.csv").to_html(index=False)
+
+
+    return await render_template(
+        "model.html",
+        resources=markupsafe.Markup(bokeh.resources.CDN.render()),
+        weather_table_html=markupsafe.Markup(weather_table),
+        energy_table_html=markupsafe.Markup(energy_table),
+        x_weights_table_html=markupsafe.Markup(x_weights_table),
+        y_weights_table_html=markupsafe.Markup(y_weights_table),
+    )
+
+    
+
 @app.get('/Energy-Prediction')
 async def energy_predict():
     try:
