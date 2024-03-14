@@ -110,25 +110,32 @@ def insert_data_to_db(collection, df):
 
 
 async def scraping():
-    """Run the program: Scraping the website, Insert it to DB"""
+    """Run the program: Scraping the website"""
 
-    collection = connect_to_db()
-    end_date = datetime.date.today() - datetime.timedelta(days=1)
-    start_date = end_date - datetime.timedelta(days=2)
+    end_date = datetime.date.today() - datetime.timedelta(days=700)
+    start_date = end_date - datetime.timedelta(days=180)
     country = "10YCH-SWISSGRIDZ"
     
     date = pd.date_range(start_date, end_date, freq="D")
 
     collected_dfs = []
-    
+
     for d in date:
         print(f'Working on {d.year}-{d.month}-{d.day}')
         df = await scrape_website_data(country=country, date=d)
         collected_dfs.append(df)
-            
+
     df_to_insert = pd.concat(collected_dfs)  
 
     print("all data scraped, ready to insert in db")
+    
+    return df_to_insert
+
+
+async def inserting(df_to_insert):
+    """Run the program: Insert in DB"""
+
+    collection = connect_to_db()
     
     try:
         insert_data_to_db(collection, df_to_insert)
@@ -148,5 +155,10 @@ async def scraping():
             raise RuntimeError(f"Unexpected error; {n_duplicate=} {n_success=} {df_to_insert.shape[0]=} {had_write_concern=} {not_discarded=}")
 
 
+async def main():
+    df = await scraping()
+    await inserting(df)
+
+
 if __name__ == "__main__":
-    asyncio.run(scraping())
+    asyncio.run(main())

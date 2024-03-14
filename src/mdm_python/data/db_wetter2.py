@@ -23,6 +23,7 @@ def connect_to_db_Wetter_Durchschnitt():
         ], unique=True)
         return collection
     
+    
 
 def extract_daily_average_weather():
 
