@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% extends "base.html" %}
+    <head>
+        {% block head %}{{ super() }}{% endblock %}
+    </head>
+    <body>
+        {% block header %}{{ super() }}{% endblock %}
+        {% block navbar %}{{ super() }}{% endblock %}
+
+        {% block title %} Energie-Gewinnung Schweiz {% endblock %}
+        
+        {% block main %}{{ super() }}{% endblock %}
+        
+        {% block content %}
+
+        Hier sollten Bilder kommen:
+
+        <div class="plot center" id="energy-plot1">Plot1</div>
+        <div class="plot center" id="energy-plot2">Plot2</div>
+        <div class="plot center" id="energy-plot3">Plot3</div>
+
+
+        {% endblock %}
+
+
+        {% block scripts %}
+        <script type="module">
+            
+            const response = await fetch('/energy-plots')
+            const data = await response.json()
+  
+            const plots_div = $("#energy-plot1");
+
+            if(data.plot1 !== undefined){
+                Bokeh.embed.embed_item(data.plot1, "energy-plot1");
+                Bokeh.embed.embed_item(data.plot2, "energy-plot2");
+                Bokeh.embed.embed_item(data.plot3, "energy-plot3");
+            } else {
+              plots_div.append("<h1>"+data.error+"</h1>");
+              plots_div.append("<pre>"+data.traceback+"</pre>");
+            }
+          </script>
+        {% endblock %}
+
+    </body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% extends "base.html" %}
+    <head>
+        {% block head %}{{ super() }}{% endblock %}
+    </head>
+    <body>
+        {% block header %}{{ super() }}{% endblock %}
+        {% block navbar %}{{ super() }}{% endblock %}
+        {% block title %} Wetter der Schweiz {% endblock %}
+        {% block main %}{{ super() }}{% endblock %}
+
+
+        {% block content %}
+
+        <div class="plot center" id="plot1"></div>
+        
+        {% endblock %}
+
+
+        {% block script %}{{ super() }}{% endblock %}
+
+    </body>
+</html>

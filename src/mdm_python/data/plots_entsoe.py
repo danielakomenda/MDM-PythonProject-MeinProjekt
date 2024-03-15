@@ -55,9 +55,9 @@ def grouped_bar_plot(data_daily):
     bar_plot.xgrid.grid_line_color = None
     bar_plot.add_layout(bar_plot.legend[0], "right")  # Legend outside of the plot
 
-    bokeh.plotting.show(bar_plot)
+    fig = bokeh.layouts.column(bar_plot)
 
-    return bar_plot
+    return fig
 
 
 def yearly_pie_plot(data_daily):
@@ -110,9 +110,6 @@ def yearly_pie_plot(data_daily):
         pie_plot.grid.grid_line_color = None
 
         fig = bokeh.layouts.column(pie_plot)
-
-        # Plot Figure in Notebook
-        bokeh.plotting.show(fig)
 
     return fig
 
@@ -214,8 +211,5 @@ def stacked_area_plot(data_hourly, data_daily):
 
     # Create Figure
     fig = bokeh.layouts.column(plot_selector, range_plot, overview_plot)
-
-    # Plot Figure in Notebook
-    bokeh.plotting.show(fig)
 
     return fig

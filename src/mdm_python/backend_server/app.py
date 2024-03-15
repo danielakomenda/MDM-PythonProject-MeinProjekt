@@ -1,5 +1,3 @@
-from flask import Flask, render_template, request
-
 import json
 import logging
 import sys
@@ -11,20 +9,20 @@ import markupsafe
 import bokeh.embed
 import pandas
 
+from flask import Flask, render_template, request
 import flask_caching
 
-from data.db_entsoe import *
-from data.db_wetter2 import *
-from mdm_python.data.plots_wetter2 import *
-from mdm_python.data.plots_entsoe import *
-from mdm_python.data.plots_prediction import *
+import mdm_python.data.db_entsoe as db_entsoe 
+import mdm_python.data.db_wetter2 as db_wetter2
+import mdm_python.data.plots_wetter2 as plots_wetter2
+import mdm_python.data.plots_entsoe as plots_entsoe
+import mdm_python.data.plots_prediction as plots_prediction
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
-cache = flask_caching.Cache(config={'CACHE_TYPE': 'SimpleCache'})
-
 app = Flask(__name__)
+cache =flask_caching.Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
 
 def run() -> None:
     app.run()
@@ -42,16 +40,16 @@ def web_page(page):
 
 
 
-@app.get('/Historic-Energy-Production')
+@app.get('/energy-plots')
 @cache.cached()
-async def energy_historic():
+def energy():
     try:
-        hourly_data = extract_hourly_energy()
-        daily_data = extract_daily_energy()
+        data_hourly = db_entsoe.extract_hourly_energy()
+        data_daily = db_entsoe.extract_daily_energy()
 
-        grouped_bar_plot = grouped_bar_plot (daily_data)
-        yearly_pie_plot = yearly_pie_plot(hourly_data=hourly_data, daily_data=daily_data)
-        stacked_area_plot = stacked_area_plot(daily_data)
+        grouped_bar_plot = plots_entsoe.grouped_bar_plot(data_daily)
+        yearly_pie_plot = plots_entsoe.yearly_pie_plot(data_daily)
+        stacked_area_plot = plots_entsoe.stacked_area_plot(data_hourly=data_hourly, data_daily=data_daily)
 
         data = json.dumps(dict(
             plot1=bokeh.embed.json_item(grouped_bar_plot),
@@ -75,12 +73,12 @@ async def energy_historic():
         )
 
 
-@app.get('/Historic-Weather-Data')
+@app.get('/weather')
 @cache.cached()
-async def weather_historic():
+def weather():
     try:
-        data = await extract_daily_average_weather()
-        stacked_area_plot = stacked_area_plot(data)
+        data = db_wetter2.extract_daily_average_weather()
+        stacked_area_plot = plots_wetter2.stacked_area_plot(data)
         data = json.dumps(dict(
             plot1=bokeh.embed.json_item(stacked_area_plot),
         ))

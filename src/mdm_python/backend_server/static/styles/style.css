@@ -1,0 +1,25 @@
+.header {
+    background-color: #2e8baa;
+    height: 40px;
+    padding-left: 1%;
+    font-size: small;
+}
+
+
+.navbar {
+    background-color: rgb(238, 226, 98);
+    color:#232324;
+}
+
+
+.title {
+    text-align: center;
+    margin: 10px;
+    margin-bottom: 20px;
+    border-bottom-color: #232324;
+    border-bottom-style: groove;
+    font-size: xxx-large;
+    font-weight: bold;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    color:#232324;
+}

@@ -1,0 +1,21 @@
+<html lang="en">
+    {% extends "base.html" %}
+    <head>
+        {% block head %}{{ super() }}{% endblock %}
+    </head>
+    <body>
+        {% block header %}{{ super() }}{% endblock %}
+        {% block navbar %}{{ super() }}{% endblock %}
+        {% block title %} Main {% endblock %}
+        {% block main %}{{ super() }}{% endblock %}
+
+
+        {% block content %}
+
+        This is my Main-Page.
+        
+        {% endblock %}
+
+        {% block script %}{{ super() }}{% endblock %}
+    </body>
+</html>
