@@ -39,7 +39,7 @@ def extract_daily_average_weather():
           'max_temp': "$max_temp",
           'rain': "$rain",
           'wind_speed': "$wind_speed",
-          'clouds': "clouds",
+          'clouds': "$clouds",
         },
       },
     ]

@@ -8,12 +8,6 @@ import bokeh.layouts
 import bokeh.embed
 import bokeh.io
 
-import mdm_python.data.db_entsoe as db
-
-
-data_daily = db.extract_daily_energy()
-data_hourly = db.extract_hourly_energy()
-
 
 def grouped_bar_plot(data_daily):
     """Create Bar-Plots grouped by years"""
@@ -56,6 +50,8 @@ def grouped_bar_plot(data_daily):
     bar_plot.add_layout(bar_plot.legend[0], "right")  # Legend outside of the plot
 
     fig = bokeh.layouts.column(bar_plot)
+
+    print("Bar-Plot ready to plot")
 
     return fig
 

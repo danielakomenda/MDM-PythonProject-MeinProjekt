@@ -16,9 +16,10 @@
 
         Hier sollten Bilder kommen:
 
-        <div class="plot center" id="energy-plot1">Plot1</div>
-        <div class="plot center" id="energy-plot2">Plot2</div>
-        <div class="plot center" id="energy-plot3">Plot3</div>
+        <div class="plot center" id="energy-plots"></div>
+        <div class="plot center" id="energy-plot1"></div>
+        <div class="plot center" id="energy-plot2"></div>
+        <div class="plot center" id="energy-plot3"></div>
 
 
         {% endblock %}
@@ -30,9 +31,9 @@
             const response = await fetch('/energy-plots')
             const data = await response.json()
   
-            const plots_div = $("#energy-plot1");
+            const plots_div = $("#energy-plots");
 
-            if(data.plot1 !== undefined){
+            if(data.plot1 !== undefined && data.plot2 !== undefined && data.plot3 !== undefined){
                 Bokeh.embed.embed_item(data.plot1, "energy-plot1");
                 Bokeh.embed.embed_item(data.plot2, "energy-plot2");
                 Bokeh.embed.embed_item(data.plot3, "energy-plot3");
