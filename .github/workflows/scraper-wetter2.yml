@@ -6,7 +6,7 @@ on:
     - cron: "0 22 * * *"
 
 jobs: 
-  InsertEnergyDataToDB:
+  InsertDataToDB:
     runs-on: ubuntu-latest
     env:
       MONGODB_URI: ${{ secrets.MONGODB_URI }}

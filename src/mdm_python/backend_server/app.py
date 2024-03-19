@@ -21,8 +21,10 @@ import mdm_python.data.plots_prediction as plots_prediction
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
+
 app = Flask(__name__)
 cache =flask_caching.Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
+
 
 def run() -> None:
     app.run()
@@ -32,12 +34,12 @@ def run() -> None:
 def main_page():
     return web_page('main')
 
+
 @app.route('/pages/<string:page>')
 def web_page(page):
     return render_template(f'{page}.html',
         resources=markupsafe.Markup(bokeh.resources.CDN.render()),
     )
-
 
 
 @app.get('/energy-plots')
