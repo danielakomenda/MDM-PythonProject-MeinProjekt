@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% extends "base.html" %}
+    <head>
+        {% block head %}{{ super() }}{% endblock %}
+    </head>
+    <body>
+        {% block header %}{{ super() }}{% endblock %}
+        {% block navbar %}{{ super() }}{% endblock %}
+        {% block title %} About Me {% endblock %}
+        {% block main %}{{ super() }}{% endblock %}
+
+
+        {% block content %}
+
+        In diesem Projekt werden Wetter-Daten von wetter2.com und Energie-Produktions-Daten von entsoe.eu gescraped und in einer MongoDB-Datenbank gespeichert.
+        Die beiden Scraper laufen täglich über einen gitHub-Action-Workflow.
+
+        Die Daten werden als täglicher Durchschnitt aggregiert aus der Datenbank geladen, um Plots mit Bokeh zu erstellen.
+
+        Anschliessend wird ein linearer Zusammenhang zwischen Wetter und Energie-Produktion gesucht und die relevanten Wetter-Features werden mit einem ARIMA-Modell
+        modelliert, um eine 10-Tages-Prediction zu erstellen. Anhand dieser Prediction wird versucht die Energie-Produktion für die kommenden 10 Tage zu prognostizieren.
+
+        Die Ergebnisse werden in einem Front-End mithilfe eines Docker-Containers und mit gitHub-Action-Workflow automatisiert in die Azure-Cloud deployed.
+        Das Back-End dazu wird mithilfe von Flask erstellt und mit Jinja2-Templates gerendert.
+
+        Der Code ist mithilfe von Dokumentationen, Stack Overflow und ChatGPT eigenständig erstellt worden.
+        
+        {% endblock %}
+
+
+        {% block script %}{{ super() }}{% endblock %}
+
+    </body>
+</html>
