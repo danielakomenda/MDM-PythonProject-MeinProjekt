@@ -6,24 +6,21 @@ on:
     - cron: '0 22 1 1 *' # Once a year, when there is enough data
       
 jobs:
-  build:
+  CreateAndStoreModel:
     runs-on: ubuntu-latest
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      AZURE_STORAGE_CONNECTION_STRING: ${{secrets.AZURE_STORAGE_CONNECTION_STRING}}
     steps:
-
-      - name: checkout repo content
-        uses: actions/checkout@v3 # checkout the repository content to github runner
-
-      - name: setup python
-        uses: actions/setup-python@v4
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.12.1' # install the python version needed
-          cache: 'pip'
-          
-      - name: install python packages
-        run: pip install -r requirements.txt
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
 
-      - name: build model
-        run: python src.mdm_python.data.create_model.py -u "${{secrets.MONGODB_URI}}"
-
-      - name: upload model
-        run: python  src.mdm_python.model.save.py -c "${{secrets.AZURE_STORAGE_CONNECTION_STRING}}"
+      - name: Create Model
+        run: python -m src.mdm_python.data.create_model
+      
+      - name: Store Model to Azure
+        run: python -m src.mdm_python.model.save
