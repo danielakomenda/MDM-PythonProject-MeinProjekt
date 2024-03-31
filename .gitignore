@@ -10,5 +10,4 @@ __pycache__
 build
 dist
 
-data/*
 src/mdm_python/backend_server/static/pictures/

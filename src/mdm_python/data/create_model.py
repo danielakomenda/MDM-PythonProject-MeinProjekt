@@ -17,7 +17,7 @@ import warnings
 import mdm_python.data.db_entsoe as db_entsoe
 
 
-model_directory = Path("../data/models").resolve()
+model_directory = Path("data/models").resolve()
 energy_data = db_entsoe.extract_daily_energy()
 
 
