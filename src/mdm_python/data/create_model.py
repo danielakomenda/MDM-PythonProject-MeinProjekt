@@ -221,8 +221,8 @@ def find_best_model(name, train_data, test_data, acf_lag, pacf_lag) -> dict:
     lowest_aic = 1000000
     lowest_mse = 1000000
 
-    acf_lag = acf_lag if acf_lag<5 else 5
-    pacf_lag = pacf_lag if pacf_lag<5 else 5
+    acf_lag = acf_lag if acf_lag<2 else 2
+    pacf_lag = pacf_lag if pacf_lag<2 else 2
     
     for p in range(acf_lag-1 if acf_lag>1 else 0, acf_lag+1):
         for q in range(pacf_lag-2 if pacf_lag>2 else 0, pacf_lag+2):
@@ -273,6 +273,7 @@ def run_modelling_process(raw_data:pd.Series) -> dict:
         acf_lag, pacf_lag = get_acf_and_pacf_lags(name, data["detrended_values"])
         train_data, test_data = create_train_and_test_data(data["detrended_values"])
         best_model = find_best_model(name, train_data, test_data, acf_lag, pacf_lag)
+        print(f'found best model for {name}')
         data["model"] = best_model
 
     store_model(data_set)
