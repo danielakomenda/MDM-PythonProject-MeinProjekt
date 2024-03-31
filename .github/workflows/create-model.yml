@@ -23,9 +23,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: build model
-        working-directory: model
         run: python mdm_python.data.create_model.py -u "${{secrets.MONGODB_URI}}"
 
       - name: upload model
-        working-directory: model
-        run: python ./save.py -c "${{secrets.AZURE_STORAGE_CONNECTION_STRING}}"
+        run: python python mdm_python.model.save.py -c "${{secrets.AZURE_STORAGE_CONNECTION_STRING}}"
