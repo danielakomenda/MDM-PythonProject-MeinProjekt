@@ -1,7 +1,8 @@
-name: Python application
+name: Deploy
 
 on:
-  [push]
+  #push:
+  workflow_dispatch:
 
 env:
   AZURE_WEBAPP_NAME: mdm-python-project-komendan # set this to your application's name

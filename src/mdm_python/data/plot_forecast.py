@@ -96,8 +96,3 @@ def plot_forecast(raw_data, energy_types, models, forecast_horizon):
         plots[energy_type] = f"data:image/png;base64,{data}"
 
     return plots
-
-
-if __name__ == "__main__":
-    energy_data = db_entsoe.extract_daily_energy()
-    plot_forecast(energy_data)
