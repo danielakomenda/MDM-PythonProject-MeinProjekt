@@ -15,7 +15,7 @@ from azure.storage.blob import BlobServiceClient
 from flask import Flask, render_template, request
 import flask_caching
 
-import mdm_python.data.db_entsoe as db_entsoe 
+import mdm_python.data.db_entsoe as db_entsoe
 import mdm_python.data.plots_entsoe as plots_entsoe
 import mdm_python.data.plot_forecast as plot_forecast
 

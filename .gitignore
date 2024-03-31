@@ -11,4 +11,4 @@ build
 dist
 
 src/mdm_python/backend_server/static/pictures/
-data/
+data/models
