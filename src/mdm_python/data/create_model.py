@@ -278,3 +278,7 @@ def run_modelling_process(raw_data:pd.Series) -> dict:
     store_model(data_set)
     
     return data_set
+
+
+if __name__ == "__main__":
+    run_modelling_process()

@@ -9,9 +9,6 @@ model_directory = Path("../models").resolve()
 
 dotenv.load_dotenv()
 azure_storage_connection_string= os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-
-print(azure_storage_connection_string)
-
 blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
 
 exists = False
