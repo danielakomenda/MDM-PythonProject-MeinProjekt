@@ -16,10 +16,7 @@ from flask import Flask, render_template, request
 import flask_caching
 
 import mdm_python.data.db_entsoe as db_entsoe 
-import mdm_python.data.db_wetter2 as db_wetter2
-import mdm_python.data.plots_wetter2 as plots_wetter2
 import mdm_python.data.plots_entsoe as plots_entsoe
-import mdm_python.data.model_energy as model_energy
 import mdm_python.data.plot_forecast as plot_forecast
 
 
@@ -79,32 +76,6 @@ def energy():
         )
 
 
-@app.get('/weather')
-@cache.cached()
-def weather():
-    try:
-        data = db_wetter2.extract_daily_average_weather()
-        stacked_area_plot = plots_wetter2.stacked_area_plot(data)
-        data = json.dumps(dict(
-            plot1=bokeh.embed.json_item(stacked_area_plot),
-        ))
-        response = app.response_class(
-            response=data,
-            status=200,
-            mimetype="application/json",
-        )
-        return flask_caching.CachedResponse(
-            response=response,
-            timeout=86400,
-        )
-    except Exception as ex:
-        import traceback
-        return dict(
-            error=repr(ex),
-            traceback=traceback.format_exc(),
-        )
-
-
 def load_models():    
     azure_storage_connection_string=os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
@@ -131,40 +102,23 @@ def load_models():
         print("\t" + blob.name)
         content = container_client.download_blob(blob.name).readall()
         model = pickle.loads(content)
-        models[blob.name]=model["fitted_model"]
+        models[blob.name]=model["model"]
 
     print(models)
     return models
 
 
 
-@app.route('/energy-prediction', methods=['POST'])
+@app.route('/energy-prediction', methods=['POST', 'GET'])
 def energy_predict():
-    try:
-        energy_data = db_entsoe.extract_daily_energy()
-        energy_types = request.json.get('types', [])
-        forecast_horizon = int(request.json.get('forecastHorizon', 1)) 
-        energy_models = load_models()         
+    energy_data = db_entsoe.extract_daily_energy()
+    energy_types = request.json.get('types', [])
+    forecast_horizon = int(request.json.get('forecastHorizon', 1)) 
+    energy_models = load_models()         
 
-        plot_paths = plot_forecast.plot_forecast(energy_data, energy_types, energy_models, forecast_horizon)
-        
-        data = json.dumps({
-            "energy_prediction_plot_paths": plot_paths,
-        })
-        
-        response = app.response_class(
-            response=data,
-            status=200,
-            mimetype="application/json",
-        )
-        return response
-
-    except Exception as ex:
-        import traceback
-        return dict(
-            error=repr(ex),
-            traceback=traceback.format_exc(),
-        )
+    plots = plot_forecast.plot_forecast(energy_data, energy_types, energy_models, forecast_horizon)
+    
+    return plots
 
 
 if __name__ == "__main__":  

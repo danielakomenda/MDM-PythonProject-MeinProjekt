@@ -19,12 +19,12 @@
 
 
   <div class="form-check">
-    <p><label><input class="form-check-input" type="checkbox" name="types" value="Wind"> Wind</label></p>
-    <p><label><input class="form-check-input" type="checkbox" name="types" value="Solar"> Solar</label></p>
-    <p><label><input class="form-check-input" type="checkbox" name="types" value="Nuclear"> Nuclear</label></p>
-    <p><label><input class="form-check-input" type="checkbox" name="types" value="Water-River"> Water-River</label></p>
-    <p><label><input class="form-check-input" type="checkbox" name="types" value="Water-Pump"> Water-Pump</label></p>
-    <p><label><input class="form-check-input" type="checkbox" name="types" value="Water-Reservoir"> Water-Reservoir</label></p>
+    <p><label><input class="form-check-input" type="checkbox" name="types" value="wind"> Wind</label></p>
+    <p><label><input class="form-check-input" type="checkbox" name="types" value="solar"> Solar</label></p>
+    <p><label><input class="form-check-input" type="checkbox" name="types" value="nuclear"> Nuclear</label></p>
+    <p><label><input class="form-check-input" type="checkbox" name="types" value="water_river"> Water-River</label></p>
+    <p><label><input class="form-check-input" type="checkbox" name="types" value="water_pump"> Water-Pump</label></p>
+    <p><label><input class="form-check-input" type="checkbox" name="types" value="water_reservoir"> Water-Reservoir</label></p>
   </div>
      
   <p>Please select the Forecast-Horizon.</p>
@@ -51,41 +51,38 @@
             document.getElementById('sendDataButton').addEventListener('click', sendData);
         });
 
-          function sendData() {
+          async function sendData() {
+      
             var checkboxes = document.querySelectorAll('input[name="types"]:checked');
             var forecastHorizon = document.getElementById("forecastHorizon").value;
             var selectedTypes = [];
             checkboxes.forEach(function(checkbox) {
               selectedTypes.push(checkbox.value);
             });
-            fetch('/energy-prediction', {
+
+            const response = await fetch('/energy-prediction', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({ types: selectedTypes, forecastHorizon: forecastHorizon })
-            })
-            .then(response => {
-              if (!response.ok) {
-                throw new Error('Network response was not ok');
-              }
-              return response.json();
-            })
-            .then(data => {
-              console.log(data);
-            })
-            .catch(error => {
-              console.error('There was a problem with your fetch operation:', error);
             });
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+
+            displayPlots(data);
           }
 
-          function displayPlots(plotPaths) {
+
+          function displayPlots(plots) {
             const plotContainer = document.getElementById('plotContainer');
             plotContainer.innerHTML = ''; // Clear existing plots
         
-            for (const [energyType, plotPath] of Object.entries(plotPaths)) {
+            for (const [energyType, dataURL] of Object.entries(plots)) {
                 const img = document.createElement('img');
-                img.src = plotPath; // Set the source of the image
+                img.src = dataURL; // Set the source of the image
                 img.alt = `Energy prediction plot for ${energyType}`;
                 img.style.width = '100%'; // Optional: Set image width
                 plotContainer.appendChild(img); // Add the image to the container

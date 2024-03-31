@@ -11,9 +11,6 @@ import bokeh.transform
 import mdm_python.data.db_wetter2 as db
 
 
-data = db.extract_daily_average_weather()
-
-
 def stacked_area_overview_plot(data):
 
     day_source = bokeh.models.ColumnDataSource(data=data)

@@ -2,10 +2,12 @@ import datetime
 from pathlib import Path
 from types import SimpleNamespace
 import pickle
+import base64
+from io import BytesIO
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 import sklearn.metrics
 import sklearn.cross_decomposition
@@ -27,8 +29,8 @@ def energy_forecast(raw_data, energy_type, model, forecast_horizon):
     data_set = energy_model.prepare_raw_data(raw_data)
     data_set = energy_model.detrend_and_deseasonalize_data(data_set)
     
-    p, d, q = model["model"].order
-    
+    p, d, q = model.order
+
     modelling = energy_model.ARIMA_model(data_set[energy_type].detrended_values, p, 0, q)
     forecast = modelling.get_forecast(steps=forecast_horizon).summary_frame()
 
@@ -46,8 +48,9 @@ def energy_forecast(raw_data, energy_type, model, forecast_horizon):
     return forecast_df
 
 
+
 def plot_forecast(raw_data, energy_types, models, forecast_horizon):
-    plot_paths = {}
+    plots = {}
 
     for energy_type_upper in energy_types:
         energy_type = energy_type_upper.lower()
@@ -56,33 +59,32 @@ def plot_forecast(raw_data, energy_types, models, forecast_horizon):
         
         forecast_df = energy_forecast(raw_data, energy_type, model, forecast_horizon)
         # Plot the observed data
-        plt.figure(figsize=(10, 6))
-        plt.plot(raw_data.index, raw_data[energy_type], label=f'Observed {energy_type}', color='blue')
+        fig = Figure(figsize=(10, 6))
+        ax = fig.subplots()
+        
+        ax.plot(raw_data.index, raw_data[energy_type], label=f'Observed {energy_type}', color='blue')
         
         # Plot the forecasted values
-        plt.plot(forecast_df.index, forecast_df[energy_type], label=f'Forecasted {energy_type}', color='red')
+        ax.plot(forecast_df.index, forecast_df[energy_type], label=f'Forecasted {energy_type}', color='red')
         
         # Add shades for uncertainty intervals
-        plt.fill_between(forecast_df.index, forecast_df[f'lower_{energy_type}'], forecast_df[f'upper_{energy_type}'], color='lightcoral', alpha=0.3)
+        ax.fill_between(forecast_df.index, forecast_df[f'lower_{energy_type}'], forecast_df[f'upper_{energy_type}'], color='lightcoral', alpha=0.3)
         
         # Add labels, legend, and title
-        plt.xlabel('Date')
-        plt.ylabel('Value')
-        plt.title(f'Observed and Forecasted Data with Confidence Intervals for {energy_type}')
-        plt.legend()
-        plt.grid(True)
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Value')
+        ax.set_title(f'Observed and Forecasted Data with Confidence Intervals for {energy_type}')
+        ax.legend()
+        ax.grid(True)
 
-        # Define the path for saving the plot
-        plot_path = plot_directory/f"{energy_type}_forecast.png"
+        buf = BytesIO()
+        fig.savefig(buf, format="png")
+        # Embed the result in the html output.
+        data = base64.b64encode(buf.getbuffer()).decode("ascii")
+        
+        plots[energy_type] = f"data:image/png;base64,{data}"
 
-        # Save the plot
-        plt.savefig(plot_path)
-        plt.close()  # Important to free memory
-
-        # Store the relative or absolute path in the dictionary
-        plot_paths[energy_type] = plot_path
-
-    return plot_paths
+    return plots
 
 
 if __name__ == "__main__":
