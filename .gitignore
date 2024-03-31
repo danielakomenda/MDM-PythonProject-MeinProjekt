@@ -12,3 +12,4 @@ dist
 
 src/mdm_python/backend_server/static/pictures/
 data/models
+Notebooks/unused/

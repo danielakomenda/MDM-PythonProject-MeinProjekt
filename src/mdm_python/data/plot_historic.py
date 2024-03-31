@@ -1,6 +1,6 @@
-import matplotlib.pyplot as plt
-import pandas as pd
 import math
+
+import pandas as pd
 import bokeh.transform
 import bokeh.models
 import bokeh.plotting
