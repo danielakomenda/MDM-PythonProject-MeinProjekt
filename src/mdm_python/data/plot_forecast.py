@@ -18,7 +18,7 @@ import warnings
 
 
 import mdm_python.data.db_entsoe as db_entsoe
-import mdm_python.data.create_model as energy_model
+import mdm_python.data.model_create as energy_model
 
 
 model_directory = Path("../data/models").resolve()

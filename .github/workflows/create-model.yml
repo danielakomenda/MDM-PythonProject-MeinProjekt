@@ -23,7 +23,7 @@ jobs:
       - run: pip install .
 
       - name: Create Model
-        run: python -m mdm_python.data.create_model
+        run: python -m mdm_python.data.model_create
       
       - name: Store Model to Azure
-        run: python -m mdm_python.data.save
+        run: python -m mdm_python.data.model_save
