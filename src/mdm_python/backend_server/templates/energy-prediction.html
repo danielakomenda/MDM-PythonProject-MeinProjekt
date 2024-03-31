@@ -33,6 +33,13 @@
   <button id="sendDataButton">Send Data</button>
 
         
+
+     Here should be 1 - 6 plots, depending on the user-input
+
+     <div id="plotContainer"></div>
+
+
+
         {% endblock %}
 
       </body>
@@ -71,6 +78,19 @@
               console.error('There was a problem with your fetch operation:', error);
             });
           }
+
+          function displayPlots(plotPaths) {
+            const plotContainer = document.getElementById('plotContainer');
+            plotContainer.innerHTML = ''; // Clear existing plots
+        
+            for (const [energyType, plotPath] of Object.entries(plotPaths)) {
+                const img = document.createElement('img');
+                img.src = plotPath; // Set the source of the image
+                img.alt = `Energy prediction plot for ${energyType}`;
+                img.style.width = '100%'; // Optional: Set image width
+                plotContainer.appendChild(img); // Add the image to the container
+            }
+        }
 
         </script>
         {% endblock %}

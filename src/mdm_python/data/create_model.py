@@ -1,6 +1,6 @@
-import datetime
-from pathlib import Path
 import pickle
+from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import numpy as np
@@ -13,13 +13,15 @@ import statsmodels
 import statsmodels.api
 import warnings
 
+
 import mdm_python.data.db_entsoe as db_entsoe
 
 
-model_directory = Path("data/models").resolve()
+model_directory = Path("../data/models").resolve()
+energy_data = db_entsoe.extract_daily_energy()
 
 
-def prepare_raw_data (data: pd.DataFrame) -> pd.DataFrame:
+def prepare_raw_data (data: pd.DataFrame) -> dict:
     """
     Transform the data to log-scale with an offset to handle the high number of zeros
     The offset will change the skew-of the histogram close to 0
@@ -44,39 +46,48 @@ def prepare_raw_data (data: pd.DataFrame) -> pd.DataFrame:
     data_fixed = data_fixed.interpolate(method='linear')
     data_fixed = data_fixed.dropna()
     assert data_fixed.index.freq is not None, "Data must still be fixed-frequency"
-    return data_fixed
+
+    dict_of_transformed_data = dict()
+
+    for col_name in data_fixed.columns:
+        values = SimpleNamespace(
+            name = col_name,
+            transformed_values = data_fixed[col_name],
+            offset = offset.get(col_name),
+        )
+        dict_of_transformed_data[col_name] = values
+    
+    return dict_of_transformed_data
 
 
-def detrend_and_deseasonalize_data(prepared_data: pd.DataFrame) -> dict:
+
+def detrend_and_deseasonalize_data(prepared_data: dict) -> dict:
     """
     Detrend and deseasonlize the prepared data.
     Create a dictionnary with Name, detrended values and the baseline
     """
     warnings.filterwarnings("ignore", message="Series.fillna with 'method' is deprecated.*")
 
-    dict_of_detrended_data = dict()
     breakpoints = dict(
-        solar = pd.Timestamp("2020-01-01",tz=prepared_data.index.tz), # breakpoints for structural break
+        solar = pd.Timestamp("2020-01-01",tz=prepared_data["solar"].transformed_values.index.tz), # breakpoints for structural break
     )
     
-    for col_name in prepared_data.columns:
-        modelling_basis = prepared_data[col_name]
+    for col_name, values in prepared_data.items():
+        modelling_basis = values.transformed_values
         if breakpoints.get(col_name) is not None:
             modelling_basis = modelling_basis[modelling_basis.index >= breakpoints.get(col_name)]      
-        weekly_seasonality = statsmodels.api.tsa.seasonal_decompose(modelling_basis, period=7, model="additive")
+        weekly_seasonality = statsmodels.api.tsa.seasonal_decompose(modelling_basis, period=7, model="additive", extrapolate_trend='freq')
         week_removed = modelling_basis - weekly_seasonality.seasonal
-        yearly_seasonality = statsmodels.api.tsa.seasonal_decompose(week_removed, period=365, model="additive")
-        trend = yearly_seasonality.trend.fillna(method="ffill").fillna(method="bfill")
+        yearly_seasonality = statsmodels.api.tsa.seasonal_decompose(week_removed, period=365, model="additive", extrapolate_trend='freq')
+        trend = yearly_seasonality.trend
         baseline = yearly_seasonality.seasonal + trend + weekly_seasonality.seasonal
+        
         changed_data_deseasonalized = modelling_basis - baseline
-        values = dict(
-            name = col_name,
-            detrended_values = changed_data_deseasonalized,
-            baseline = baseline,
-        )
-        dict_of_detrended_data[col_name] = values
+        
+        values.detrended_values = changed_data_deseasonalized
+        values.baseline = baseline
     
-    return dict_of_detrended_data
+    return prepared_data
 
 
 def check_for_stationarity(name:str, data:pd.Series) -> bool:
@@ -96,7 +107,6 @@ def check_for_stationarity(name:str, data:pd.Series) -> bool:
     
     print(f'{name}-data is most likely not Stationary!\n')
     return False
-
 
 
 def check_if_white_noise(name:str, data:pd.Series) -> bool:
@@ -126,7 +136,6 @@ def check_if_white_noise(name:str, data:pd.Series) -> bool:
     
     print(f'{name}-data is most likely White Noise!\n')
     return False
-
 
 
 def get_acf_and_pacf_lags(name:str, data:pd.Series, plot_acf_pacf=False) ->tuple:
@@ -172,6 +181,7 @@ def create_train_and_test_data(detrended_data:pd.Series, test_size=0.2):
     return train_data, test_data
 
 
+
 def ARIMA_model(data:pd.Series, p:int, d:int, q:int):
     """
     Model the data with an ARIMA-Model; if there is seasonality, a seasonal difference is calculated
@@ -182,9 +192,8 @@ def ARIMA_model(data:pd.Series, p:int, d:int, q:int):
     warnings.filterwarnings("ignore", message="Maximum Likelihood optimization failed to converge.")    
 
     model = statsmodels.tsa.arima.model.ARIMA(data, order=(p, d, q), freq='D')
-    fitted_model = model.fit()
-    return fitted_model
-
+    fit_result = model.fit()
+    return fit_result
 
 
 def check_significance_of_coefficients(fitted_model, significance_level=0.5) -> bool:
@@ -196,9 +205,9 @@ def check_significance_of_coefficients(fitted_model, significance_level=0.5) -> 
         if not (abs(p_value) < significance_level):
             return False
         return True
-    
-    
-    
+
+
+
 def check_accuracy(fitted_model, test_data):
     """
     Check, how accurate the fitted Model used on the test-dataset,
@@ -216,44 +225,48 @@ def find_best_model(name, train_data, test_data, acf_lag, pacf_lag) -> dict:
     Try different Meta-Parameters to check, if the AIC and MSE are becoming better
     Return the best model
     """
-    best_model = dict()
+    best_model = None
 
     lowest_aic = 1000000
     lowest_mse = 1000000
 
-    acf_lag = acf_lag if acf_lag<2 else 2
-    pacf_lag = pacf_lag if pacf_lag<2 else 2
+    acf_lag = acf_lag if acf_lag<5 else 5
+    pacf_lag = pacf_lag if pacf_lag<5 else 5
     
     for p in range(acf_lag-1 if acf_lag>1 else 0, acf_lag+1):
         for q in range(pacf_lag-2 if pacf_lag>2 else 0, pacf_lag+2):
            for d in range(2):
-                print(f'ARIMA({p}, {d}, {q})')
-                fitted_model = ARIMA_model(train_data, p, d, q)
-                if not check_significance_of_coefficients(fitted_model):
+                print(f'ARIMA for {name}: ({p}, {d}, {q})')
+                fit_result = ARIMA_model(train_data, p, d, q)
+                if not check_significance_of_coefficients(fit_result):
                     continue
-                mse, rmse = check_accuracy(fitted_model, test_data)
-                if fitted_model.aic<lowest_aic and mse<lowest_mse:
-                    lowest_aic=fitted_model.aic
+                mse, rmse = check_accuracy(fit_result, test_data)
+                if fit_result.aic<lowest_aic and mse<lowest_mse:
+                    lowest_aic=fit_result.aic
                     lowest_mse=mse
-                    best_model["name"]=name
-                    best_model["p"]=p,
-                    best_model["d"]=d,
-                    best_model["q"]=q,
-                    best_model["fitted_model"]=fitted_model,
-                    best_model["mse"]=mse,
-                    best_model["rmse"]=rmse,
-                    best_model["aic"]=fitted_model.aic,
-                    
+                    best_model = dict(
+                        name=name,
+                        p=p,
+                        d=d,
+                        q=q,
+                        model=fit_result.model,
+                        mse=mse,
+                        rmse=rmse,
+                        aic=fit_result.aic,
+                    )
+    assert best_model is not None
     return best_model
+
 
 
 def store_model(data_set:dict):
     model_directory.mkdir(parents=True, exist_ok=True)
     for name, data in data_set.items():
         with open(model_directory/f"{name}.pickle", "wb") as fh:
-            pickle.dump(data["model"], fh)
-            
-            
+            pickle.dump(data.model, fh)
+
+
+
 def run_modelling_process(raw_data:pd.Series) -> dict:
     """
     Prepare the data
@@ -261,24 +274,23 @@ def run_modelling_process(raw_data:pd.Series) -> dict:
     Run the process to find the best model
     Store the model as a Pickle-File
     """
-
     data_set = prepare_raw_data(raw_data)
     data_set = detrend_and_deseasonalize_data(data_set)
 
     for name, data in data_set.items():
-        if check_for_stationarity(name, data["detrended_values"]) and check_if_white_noise(name, data["detrended_values"]):
+        if check_for_stationarity(name, data.detrended_values) and check_if_white_noise(name, data.detrended_values):
             print(f'{name} is most likely stationary and not White Noise')
     
     for name, data in data_set.items():
-        acf_lag, pacf_lag = get_acf_and_pacf_lags(name, data["detrended_values"])
-        train_data, test_data = create_train_and_test_data(data["detrended_values"])
+        acf_lag, pacf_lag = get_acf_and_pacf_lags(name, data.detrended_values)
+        train_data, test_data = create_train_and_test_data(data.detrended_values)
         best_model = find_best_model(name, train_data, test_data, acf_lag, pacf_lag)
-        print(f'found best model for {name}')
-        data["model"] = best_model
+        data.model = best_model
 
     store_model(data_set)
     
     return data_set
+
 
 
 if __name__ == "__main__":

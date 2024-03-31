@@ -1,4 +1,3 @@
-import datetime
 from pathlib import Path
 from types import SimpleNamespace
 import pickle
@@ -6,9 +5,6 @@ import pickle
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
-import seaborn
-import sklearn
 import sklearn.metrics
 import sklearn.cross_decomposition
 import sklearn.linear_model
@@ -142,11 +138,3 @@ def store_model(prepared_data):
     for name, data in prepared_data.items():
         with open(model_directory/f"{name}.pickle", "wb") as fh:
             pickle.dump(data["model"], fh)
-
-
-
-def energy_prediction(energy_data, energy_model, forecast_horizon):
-    pass
-
-def energy_prediction_plot(energy_data, energy_model):
-    pass

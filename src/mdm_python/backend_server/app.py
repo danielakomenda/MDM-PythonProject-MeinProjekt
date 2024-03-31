@@ -3,12 +3,14 @@ import logging
 import sys
 import pickle
 import os
-import pathlib
+from pathlib import Path
 
+import dotenv
 import bokeh.resources
 import markupsafe
 import bokeh.embed
 import pandas
+from azure.storage.blob import BlobServiceClient
 
 from flask import Flask, render_template, request
 import flask_caching
@@ -18,6 +20,7 @@ import mdm_python.data.db_wetter2 as db_wetter2
 import mdm_python.data.plots_wetter2 as plots_wetter2
 import mdm_python.data.plots_entsoe as plots_entsoe
 import mdm_python.data.model_energy as model_energy
+import mdm_python.data.plot_forecast as plot_forecast
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
@@ -102,26 +105,53 @@ def weather():
         )
 
 
+def load_models():    
+    azure_storage_connection_string=os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
+
+    containers = blob_service_client.list_containers(include_metadata=True)
+    suffix = 0
+    for container in containers:
+        existingContainerName = container['name']
+        if existingContainerName.startswith("energy-model"):
+            parts = existingContainerName.split("-")
+            newSuffix = int(parts[-1])
+            if newSuffix > suffix:
+                suffix = newSuffix
+
+    container_name = f"energy-model-{suffix}"
+    print(f'loading from container: {container_name}')
+
+
+    container_client = blob_service_client.get_container_client(container_name)
+    blob_list = container_client.list_blobs()
+
+    models = dict()
+    for blob in blob_list:
+        print("\t" + blob.name)
+        content = container_client.download_blob(blob.name).readall()
+        model = pickle.loads(content)
+        models[blob.name]=model["fitted_model"]
+
+    print(models)
+    return models
+
+
 
 @app.route('/energy-prediction', methods=['POST'])
 def energy_predict():
     try:
-        energy_models = []
-        energy_types = request.json.get('types', [])
-        forecast_horizon = int(request.json.get('forecastHorizon', 1))        
-        for energy_type in energy_types:
-            file_path = pathlib.Path(".", "../models/", f"energy_{energy_type.lower()}.pkl")
-            with open(file_path, 'rb') as fid:
-                energy_model = pickle.load(fid)
-                energy_models.append(energy_model)
-        
         energy_data = db_entsoe.extract_daily_energy()
-        energy_prediction = model_energy.energy_prediction(energy_data, energy_models, forecast_horizon)
-        energy_prediction_plot = model_energy.energy_prediction_plot(energy_prediction)
+        energy_types = request.json.get('types', [])
+        forecast_horizon = int(request.json.get('forecastHorizon', 1)) 
+        energy_models = load_models()         
+
+        plot_paths = plot_forecast.plot_forecast(energy_data, energy_types, energy_models, forecast_horizon)
         
-        data = json.dumps(dict(
-            energy_prediction_plot=bokeh.embed.json_item(energy_prediction_plot),
-        ))
+        data = json.dumps({
+            "energy_prediction_plot_paths": plot_paths,
+        })
+        
         response = app.response_class(
             response=data,
             status=200,
@@ -137,38 +167,5 @@ def energy_predict():
         )
 
 
-"""
-
-@app.route('/Weather-Prediction')
-def weather_predict():
-    try:
-        file_path = pathlib.Path(".", "../model/", "weather_arima.pkl")
-        with open(file_path, 'rb') as fid:
-            model = pickle.load(fid)
-        weather_data = db_wetter2.extract_daily_average_weather()
-        prediction = energy_model.energy_prediction(weather_data, model)
-        weather_prediction_plot = energy_model.energy_prediction_plot(prediction)
-        
-        data = json.dumps(dict(
-            weather_prediction_plot=bokeh.embed.json_item(weather_prediction_plot),
-        ))
-
-        response = app.response_class(
-            response=data,
-            status=200,
-            mimetype="application/json",
-        )
-        return response
-
-    except Exception as ex:
-        import traceback
-        return dict(
-            error=repr(ex),
-            traceback=traceback.format_exc(),
-        )
-
-"""
-
-
-if __name__ == "__main__":
+if __name__ == "__main__":  
     app.run(port=5000)

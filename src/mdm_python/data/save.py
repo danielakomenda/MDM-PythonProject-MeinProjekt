@@ -1,7 +1,8 @@
 import os
-from azure.storage.blob import BlobServiceClient
 from pathlib import Path
+
 import dotenv
+from azure.storage.blob import BlobServiceClient
 
 
 model_directory = Path("data/models").resolve()
@@ -16,14 +17,11 @@ containers = blob_service_client.list_containers(include_metadata=True)
 suffix = 0
 for container in containers:
     existingContainerName = container['name']
-    print(existingContainerName, container['metadata'])
     if existingContainerName.startswith("energy-model"):
         parts = existingContainerName.split("-")
-        print(parts)
-        if (len(parts) == 3):
-            newSuffix = int(parts[-1])
-            if (newSuffix > suffix):
-                suffix = newSuffix
+        newSuffix = int(parts[-1])
+        if newSuffix > suffix:
+            suffix = newSuffix
 
 suffix += 1
 container_name = f"energy-model-{suffix}"
