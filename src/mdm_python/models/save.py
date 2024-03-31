@@ -1,23 +1,11 @@
-# cd model
-# python save.py -c '***AZURE_STORAGE_CONNECTION_STRING***'
-
-import os, uuid
-from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
-import argparse
+import os
+from azure.storage.blob import BlobServiceClient
 import dotenv
 
 
 try:
     dotenv.load_dotenv()
     azure_storage_connection_string= os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-    if azure_storage_connection_string is None:
-        import argparse
-        parser = argparse.ArgumentParser(description='Upload Model')
-        parser.add_argument('-c', '--connection', required=True, help="azure storage connection string")
-        args = parser.parse_args()
-        azure_storage_connection_string = args.connection
-
     blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
 
     # Create the BlobServiceClient object
@@ -52,16 +40,27 @@ try:
         # Create the container
         container_client = blob_service_client.create_container(container_name)
 
-    local_file_name = "GradientBoostingRegressor.pkl"
-    upload_file_path = os.path.join(".", local_file_name)
 
-    # Create a blob client using the local file name as the name for the blob
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=local_file_name)
-    print("\nUploading to Azure Storage as blob:\n\t" + local_file_name)
+    models = dict(
+        nuclear_model = "nuclear.pickle",
+        solar_model = "solar.pickle",
+        water_pump_model = "water_pump.pickle",
+        water_reservoir_model = "water_reservoir.pickle",
+        water_river_model = "water_river.pickle",
+        wind_model = "wind.pickle",
+    )
+    
+    
+    for model, file_path in models:
+        upload_file_path = os.path.join(".", file_path)
 
-    # Upload the created file
-    with open(file=upload_file_path, mode="rb") as data:
-        blob_client.upload_blob(data)
+        # Create a blob client using the local file name as the name for the blob
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=local_file_name)
+        print("\nUploading to Azure Storage as blob:\n\t" + local_file_name)
+
+        # Upload the created file
+        with open(file=upload_file_path, mode="rb") as data:
+            blob_client.upload_blob(data)
 
 except Exception as ex:
     print('Exception:')

@@ -3,6 +3,7 @@ import logging
 import sys
 import pickle
 import os
+import pathlib
 
 import bokeh.resources
 import markupsafe
@@ -16,7 +17,7 @@ import mdm_python.data.db_entsoe as db_entsoe
 import mdm_python.data.db_wetter2 as db_wetter2
 import mdm_python.data.plots_wetter2 as plots_wetter2
 import mdm_python.data.plots_entsoe as plots_entsoe
-import mdm_python.data.plots_prediction as plots_prediction
+import mdm_python.data.model_energy as model_energy
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
@@ -101,44 +102,25 @@ def weather():
         )
 
 
-"""
 
-
-@app.get('/pages/model')
-async def weather_features():
-    weather_table = pd.read_csv(app.root_path/"assets/weatherfeatures.csv").to_html(index=False)
-    energy_table = pd.read_csv(app.root_path / "assets/energyfeatures.csv").to_html(index=False)
-    x_weights_table = pd.read_csv(app.root_path / "assets/x_weights.csv").to_html(index=False)
-    y_weights_table = pd.read_csv(app.root_path / "assets/y_weights.csv").to_html(index=False)
-
-
-    return await render_template(
-        "model.html",
-        resources=markupsafe.Markup(bokeh.resources.CDN.render()),
-        weather_table_html=markupsafe.Markup(weather_table),
-        energy_table_html=markupsafe.Markup(energy_table),
-        x_weights_table_html=markupsafe.Markup(x_weights_table),
-        y_weights_table_html=markupsafe.Markup(y_weights_table),
-    )
-
-    
-
-@app.get('/Energy-Prediction')
-async def energy_predict():
+@app.route('/energy-prediction', methods=['POST'])
+def energy_predict():
     try:
-        lat = float(quart.request.args["lat"])
-        lon = float(quart.request.args["lon"])
-
-        result = await extract_predictions_daily(app_state, lon=lon, lat=lat)
-        features = prepare_prediction_features(result, lat)
-        prediction = energy_prediction(app_state.model, features)
-
-        energy_prediction_plot = energy_prediction_interactive_plot(prediction)
-        energy_prediction_pie = energy_prediction_pieplot(prediction)
-
+        energy_models = []
+        energy_types = request.json.get('types', [])
+        forecast_horizon = int(request.json.get('forecastHorizon', 1))        
+        for energy_type in energy_types:
+            file_path = pathlib.Path(".", "../models/", f"energy_{energy_type.lower()}.pkl")
+            with open(file_path, 'rb') as fid:
+                energy_model = pickle.load(fid)
+                energy_models.append(energy_model)
+        
+        energy_data = db_entsoe.extract_daily_energy()
+        energy_prediction = model_energy.energy_prediction(energy_data, energy_models, forecast_horizon)
+        energy_prediction_plot = model_energy.energy_prediction_plot(energy_prediction)
+        
         data = json.dumps(dict(
-            energy_prediction_plot1=bokeh.embed.json_item(energy_prediction_plot),
-            energy_prediction_plot2=bokeh.embed.json_item(energy_prediction_pie),
+            energy_prediction_plot=bokeh.embed.json_item(energy_prediction_plot),
         ))
         response = app.response_class(
             response=data,
@@ -146,6 +128,7 @@ async def energy_predict():
             mimetype="application/json",
         )
         return response
+
     except Exception as ex:
         import traceback
         return dict(
@@ -154,22 +137,29 @@ async def energy_predict():
         )
 
 
-@app.get('/Weather-Prediction')
-async def weather_predict():
+"""
+
+@app.route('/Weather-Prediction')
+def weather_predict():
     try:
-        lat = float(quart.request.args["lat"])
-        lon = float(quart.request.args["lon"])
-        result = await extract_predictions_daily(app_state, lon=lon, lat=lat)
-        weather_prediction_plot = weather_prediction_interactive_plot(result)
+        file_path = pathlib.Path(".", "../model/", "weather_arima.pkl")
+        with open(file_path, 'rb') as fid:
+            model = pickle.load(fid)
+        weather_data = db_wetter2.extract_daily_average_weather()
+        prediction = energy_model.energy_prediction(weather_data, model)
+        weather_prediction_plot = energy_model.energy_prediction_plot(prediction)
+        
         data = json.dumps(dict(
             weather_prediction_plot=bokeh.embed.json_item(weather_prediction_plot),
         ))
+
         response = app.response_class(
             response=data,
             status=200,
             mimetype="application/json",
         )
         return response
+
     except Exception as ex:
         import traceback
         return dict(
@@ -177,7 +167,7 @@ async def weather_predict():
             traceback=traceback.format_exc(),
         )
 
-        """
+"""
 
 
 if __name__ == "__main__":

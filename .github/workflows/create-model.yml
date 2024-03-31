@@ -1,0 +1,31 @@
+name: Create new Model
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 22 1 1 *' # Once a year, when there are new yearly data
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout repo content
+        uses: actions/checkout@v3 # checkout the repository content to github runner
+
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.1' # install the python version needed
+          cache: 'pip'
+          
+      - name: install python packages
+        run: pip install -r requirements.txt
+
+      - name: build model
+        working-directory: model
+        run: python mdm_python.data.create_model.py -u "${{secrets.MONGODB_URI}}"
+
+      - name: upload model
+        working-directory: model
+        run: python ./save.py -c "${{secrets.AZURE_STORAGE_CONNECTION_STRING}}"

@@ -25,24 +25,26 @@
         {% endblock %}
 
 
-        {% block scripts %}
-        <script type="module">
-            
-            const response = await fetch('/energy-plots')
-            const data = await response.json()
-  
-            const plots_div = $("#energy-plots");
-
-            if(data.plot1 !== undefined && data.plot2 !== undefined && data.plot3 !== undefined){
-                Bokeh.embed.embed_item(data.plot1, "energy-plot1");
-                Bokeh.embed.embed_item(data.plot2, "energy-plot2");
-                Bokeh.embed.embed_item(data.plot3, "energy-plot3");
-            } else {
-              plots_div.append("<h1>"+data.error+"</h1>");
-              plots_div.append("<pre>"+data.traceback+"</pre>");
-            }
-          </script>
-        {% endblock %}
-
     </body>
+    
+    {% block scripts %}
+    <script type="module">
+        
+        const response = await fetch('/energy-plots')
+        const data = await response.json()
+
+        const plots_div = $("#energy-plots");
+
+        if(data.plot1 !== undefined && data.plot2 !== undefined && data.plot3 !== undefined){
+            Bokeh.embed.embed_item(data.plot1, "energy-plot1");
+            Bokeh.embed.embed_item(data.plot2, "energy-plot2");
+            Bokeh.embed.embed_item(data.plot3, "energy-plot3");
+        } else {
+            plots_div.append("<h1>"+data.error+"</h1>");
+            plots_div.append("<pre>"+data.traceback+"</pre>");
+        }
+    </script>
+    {% endblock %}
+
+
 </html>

@@ -13,12 +13,28 @@
 
         {% block content %}
 
-        <div class="plot center" id="plot1"></div>
+        <div class="plot center" id="weather-plots"></div>
+        <div class="plot center" id="weather-plot1"></div>
         
         {% endblock %}
 
 
-        {% block script %}{{ super() }}{% endblock %}
+        {% block script %}
+        <script type="module">
+            
+            const response = await fetch('/weather-plots')
+            const data = await response.json()
+  
+            const plots_div = $("#weather-plots");
+
+            if(data.plot1 !== undefined){
+                Bokeh.embed.embed_item(data.plot1, "weather-plot1");
+            } else {
+              plots_div.append("<h1>"+data.error+"</h1>");
+              plots_div.append("<pre>"+data.traceback+"</pre>");
+            }
+          </script>
+        {% endblock %}
 
     </body>
 </html>
