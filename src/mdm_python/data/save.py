@@ -1,7 +1,10 @@
 import os
 from azure.storage.blob import BlobServiceClient
+from pathlib import Path
 import dotenv
 
+
+model_directory = Path("../models").resolve()
 
 try:
     dotenv.load_dotenv()
@@ -39,12 +42,12 @@ try:
 
 
     models = dict(
-        nuclear_model = "nuclear.pickle",
-        solar_model = "solar.pickle",
-        water_pump_model = "water_pump.pickle",
-        water_reservoir_model = "water_reservoir.pickle",
-        water_river_model = "water_river.pickle",
-        wind_model = "wind.pickle",
+        nuclear_model = model_directory/"nuclear.pickle",
+        solar_model = model_directory/"solar.pickle",
+        water_pump_model = model_directory/"water_pump.pickle",
+        water_reservoir_model = model_directory/"water_reservoir.pickle",
+        water_river_model = model_directory/"water_river.pickle",
+        wind_model = model_directory/"wind.pickle",
     )
     
     
@@ -52,8 +55,8 @@ try:
         upload_file_path = os.path.join(".", file_path)
 
         # Create a blob client using the local file name as the name for the blob
-        blob_client = blob_service_client.get_blob_client(container=container_name, blob=local_file_name)
-        print("\nUploading to Azure Storage as blob:\n\t" + local_file_name)
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=file_path)
+        print("\nUploading to Azure Storage as blob:\n\t" + file_path)
 
         # Upload the created file
         with open(file=upload_file_path, mode="rb") as data:

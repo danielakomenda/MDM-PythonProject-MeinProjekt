@@ -1,6 +1,7 @@
 name: Create new Model
 
 on:
+  push:
   workflow_dispatch:
   schedule:
     - cron: '0 22 1 1 *' # Once a year, when there is enough data
