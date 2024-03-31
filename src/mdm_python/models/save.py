@@ -8,9 +8,6 @@ try:
     azure_storage_connection_string= os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
 
-    # Create the BlobServiceClient object
-    blob_service_client = BlobServiceClient.from_connection_string(args.connection)
-
     exists = False
     containers = blob_service_client.list_containers(include_metadata=True)
     suffix = 0

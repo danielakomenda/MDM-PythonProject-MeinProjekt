@@ -3,7 +3,7 @@ name: Create new Model
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 22 1 1 *' # Once a year, when there are new yearly data
+    - cron: '0 22 1 1 *' # Once a year, when there is enough data
       
 jobs:
   build:
@@ -23,7 +23,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: build model
-        run: python mdm_python.data.create_model.py -u "${{secrets.MONGODB_URI}}"
+        run: python src.mdm_python.data.create_model.py -u "${{secrets.MONGODB_URI}}"
 
       - name: upload model
-        run: python python mdm_python.model.save.py -c "${{secrets.AZURE_STORAGE_CONNECTION_STRING}}"
+        run: python  src.mdm_python.model.save.py -c "${{secrets.AZURE_STORAGE_CONNECTION_STRING}}"
