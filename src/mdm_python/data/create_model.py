@@ -281,4 +281,4 @@ def run_modelling_process(raw_data:pd.Series) -> dict:
 
 
 if __name__ == "__main__":
-    run_modelling_process()
+    run_modelling_process(energy_data)
