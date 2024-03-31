@@ -2,4 +2,4 @@ command = /Users/missd/.pyenv/versions/3.12.1/bin/python -m venv /Users/missd/De
 
 
 Eigene Library Installieren
-pip install .
+pip install -e .
