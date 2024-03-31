@@ -15,8 +15,8 @@ import warnings
 
 import mdm_python.data.db_entsoe as db_entsoe
 
-model_directory = Path("../src/mdm_python/models").resolve()
-energy_data = db_entsoe.extract_daily_energy()
+
+model_directory = Path("data/models").resolve()
 
 
 def prepare_raw_data (data: pd.DataFrame) -> pd.DataFrame:
@@ -248,10 +248,10 @@ def find_best_model(name, train_data, test_data, acf_lag, pacf_lag) -> dict:
 
 
 def store_model(data_set:dict):
+    model_directory.mkdir(parents=True, exist_ok=True)
     for name, data in data_set.items():
         with open(model_directory/f"{name}.pickle", "wb") as fh:
             pickle.dump(data["model"], fh)
-            
             
             
 def run_modelling_process(raw_data:pd.Series) -> dict:
@@ -282,4 +282,5 @@ def run_modelling_process(raw_data:pd.Series) -> dict:
 
 
 if __name__ == "__main__":
+    energy_data = db_entsoe.extract_daily_energy()
     run_modelling_process(energy_data)

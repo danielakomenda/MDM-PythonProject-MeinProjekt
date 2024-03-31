@@ -4,7 +4,7 @@ from pathlib import Path
 import dotenv
 
 
-model_directory = Path("../models").resolve()
+model_directory = Path("data/models").resolve()
 
 
 dotenv.load_dotenv()
