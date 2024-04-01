@@ -6,7 +6,7 @@ on:
     - cron: '0 22 1 1 *' # Once a year, when there is enough data
   push:
     paths:
-      - 'path/to/mdm_python/data/model_create.py' # Changes in the File
+      - 'src/mdm_python/data/model_create.py' # Changes in the File
       
 jobs:
   CreateAndStoreModel:
