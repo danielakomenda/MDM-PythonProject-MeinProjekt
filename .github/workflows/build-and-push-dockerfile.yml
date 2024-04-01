@@ -1,7 +1,9 @@
-name: Build and Push Dockerfile
+name: Deploy-Pipeline
 
 on:
   push:
+    branches:
+        - 'main'
   workflow_dispatch:
 
 jobs:
@@ -21,12 +23,6 @@ jobs:
             username: ${{ secrets.DOCKERHUB_USERNAME }}
             password: ${{ secrets.MDMPYTHONPROJECT_REGISTRY_PASSWORD }}
     
-        - name: Extract metadata (tags, labels) for Docker
-          id: meta
-          uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-          with:
-            images: komendan/mdm-python-project
-    
         - name: Build and push Docker image
           uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
           with:
@@ -35,3 +31,36 @@ jobs:
             platforms: linux/amd64,linux/arm64
             push: true
             tags: komendan/mdm-python-project:latest
+
+
+    deploy_to_azure:
+        needs: push_to_registry
+        runs-on: ubuntu-latest
+        permissions: 
+          id-token: write #This is required for requesting the OIDC JWT Token
+          contents: read #Required when GH token is used to authenticate with private repo
+    
+        steps:
+          - name: Checkout to the branch
+            uses: actions/checkout@v2
+    
+          - name: Azure Login
+            uses: azure/login@v1
+            with:
+              client-id: ${{ secrets.MDMPYTHONPROJECT_AZURE_CLIENT_ID }}
+              tenant-id: ${{ secrets.MDMPYTHONPROJECT_AZURE_TENANT_ID }}
+              subscription-id: ${{ secrets.MDMPYTHONPROJECT_AZURE_SUBSCRIPTION_ID }}
+    
+          - name: Deploy container app to AZURE
+            uses: azure/container-apps-deploy-action@v2
+            with:
+              registryUrl: registry-1.docker.io
+              registryUsername: ${{ secrets.MDMPYTHONPROJECT_REGISTRY_USERNAME }}
+              registryPassword: ${{ secrets.MDMPYTHONPROJECT_REGISTRY_PASSWORD }}
+              containerAppName: mdm-python-project
+              resourceGroup: mdm-python-project
+              imageToDeploy: docker.io/komendan/mdm-python-project:latest
+              disableTelemetry: true
+              environmentVariables: >-
+                MONGODB_URI=secretref:mongodburi
+                AZURE_STORAGE_CONNECTION_STRING=secretref:storage        
