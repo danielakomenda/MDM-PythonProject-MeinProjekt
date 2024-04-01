@@ -3,12 +3,12 @@ name: Auto-Deployment for mdm-python-project
 # When this action will be executed
 on:
   # Automatically trigger it when detected changes in repo
-  push:
-    branches: 
-      [ main ]
-    paths:
-    - '**'
-    - '.github/workflows/deploy.yml'
+  #push:
+    #branches: 
+      #[ main ]
+    #paths:
+    #- '**'
+    #- '.github/workflows/deploy.yml'
 
   # Allow manual trigger 
   workflow_dispatch:      
