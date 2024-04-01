@@ -22,6 +22,7 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 
 app = Flask(__name__)
 cache = flask_caching.Cache(app, config={"CACHE_TYPE": "SimpleCache"})
+energy_models = None
 
 
 def run() -> None:
@@ -49,7 +50,6 @@ def energy():
         data_daily = db_entsoe.extract_daily_energy()
 
         grouped_bar_plot = plot_historic.grouped_bar_plot(data_daily)
-        yearly_pie_plot = plot_historic.yearly_pie_plot(data_daily)
         stacked_area_plot = plot_historic.stacked_area_plot(
             data_hourly=data_hourly, data_daily=data_daily
         )
@@ -57,8 +57,7 @@ def energy():
         data = json.dumps(
             dict(
                 plot1=bokeh.embed.json_item(grouped_bar_plot),
-                plot2=bokeh.embed.json_item(yearly_pie_plot),
-                plot3=bokeh.embed.json_item(stacked_area_plot),
+                plot2=bokeh.embed.json_item(stacked_area_plot),
             )
         )
         response = app.response_class(
@@ -116,10 +115,13 @@ def load_models():
 
 @app.route("/energy-prediction", methods=["POST"])
 def energy_predict():
+    global energy_models
     energy_data = db_entsoe.extract_daily_energy()
     energy_types = request.json.get("types", [])
     forecast_horizon = int(request.json.get("forecastHorizon", 1))
-    energy_models = load_models()
+    
+    if energy_models is None:
+        energy_models = load_models()
 
     plots = plot_forecast.plot_forecast(
         energy_data, energy_types, energy_models, forecast_horizon
@@ -129,4 +131,5 @@ def energy_predict():
 
 
 if __name__ == "__main__":
+    energy_models = load_models()
     app.run(port=5000)

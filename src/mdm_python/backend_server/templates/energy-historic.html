@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% extends "base.html" %}
+    <head>
+        {% block head %}{{ super() }}{% endblock %}
+    </head>
+    <body>
+        {% block header %}{{ super() }}{% endblock %}
+        {% block navbar %}{{ super() }}{% endblock %}
+
+        {% block title %} Energie-Gewinnung Schweiz {% endblock %}
+        
+        {% block main %}{{ super() }}{% endblock %}
+        
+        {% block content %}
+
+
+        <div class="plot center" id="energy-plots"></div>
+        <p id="messageContainer"></p>
+        
+        <div class="paragraph">
+        <p>In der folgenden Grafik sieht man die Energie-Produktion nach Energie-Typ und Jahr.</p>
+        <div class="plot center" id="energy-plot1"></div>
+        </div>
+
+        <div class="paragraph">
+        <p>
+            In der folgenden Grafik sieht man die historische Energie-Produktion nach Energie-Typ.
+            Um die Details eines gewissen Zeitabschnitts zu betrachten, kann man den blauen Balken bei der unteren Grafik verschieben, vergrössern oder verkleinern. 
+            Ausserdem kann gewählt werden, ob die stündlichen oder die täglichen Energie-Daten angezeigt werden.
+        </p>
+        <div class="plot center" id="energy-plot2"></div>
+        </div>
+
+        {% endblock %}
+
+
+    </body>
+    
+    {% block scripts %}
+    <script type="module">
+        
+        var messageContainer = document.getElementById("messageContainer");
+        messageContainer.innerText =
+        "Bitte habe einen Moment Geduld, die Plots werden erstellt.";
+
+        const response = await fetch('/energy-plots')
+        const data = await response.json()
+
+        const plots_div = $("#energy-plots");
+
+        if(data.plot1 !== undefined && data.plot2 !== undefined){
+            Bokeh.embed.embed_item(data.plot1, "energy-plot1");
+            Bokeh.embed.embed_item(data.plot2, "energy-plot2");
+            messageContainer.innerText = ""
+        } else {
+            plots_div.append("<h1>"+data.error+"</h1>");
+            plots_div.append("<pre>"+data.traceback+"</pre>");
+            messageContainer.innerText =
+            "Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.";
+        }
+    </script>
+    {% endblock %}
+
+
+</html>

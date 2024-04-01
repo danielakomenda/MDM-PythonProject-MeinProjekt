@@ -260,12 +260,12 @@ def find_best_model(name, train_data, test_data, acf_lag, pacf_lag) -> dict:
 
     lowest_aic = 1000000
     lowest_mse = 1000000
+    
+    acf_lag = acf_lag if acf_lag<10 else 10 # Complex models need a lot of time to compute
+    pacf_lag = pacf_lag if pacf_lag<10 else 10 # And are not performing better
 
-    acf_lag = acf_lag if acf_lag < 5 else 5
-    pacf_lag = pacf_lag if pacf_lag < 5 else 5
-
-    for p in range(acf_lag - 1 if acf_lag > 1 else 0, acf_lag + 1):
-        for q in range(pacf_lag - 2 if pacf_lag > 2 else 0, pacf_lag + 2):
+    for p in range(acf_lag - 3 if acf_lag > 3 else 0, acf_lag + 1):
+        for q in range(pacf_lag - 3 if pacf_lag > 3 else 0, pacf_lag + 1):
             for d in range(2):
                 print(f"ARIMA for {name}: ({p}, {d}, {q})")
                 fit_result = ARIMA_model(train_data, p, d, q)

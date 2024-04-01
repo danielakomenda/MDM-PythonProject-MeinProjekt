@@ -41,6 +41,7 @@ if not exists:
     container_client = blob_service_client.create_container(container_name)
 
 
+
 models = dict(
     nuclear_model=model_directory / "nuclear.pickle",
     solar_model=model_directory / "solar.pickle",
@@ -50,9 +51,7 @@ models = dict(
     wind_model=model_directory / "wind.pickle",
 )
 
-
 for model, file_path in models.items():
-
     # Create a blob client using the local file name as the name for the blob
     blob_client = blob_service_client.get_blob_client(
         container=container_name, blob=file_path

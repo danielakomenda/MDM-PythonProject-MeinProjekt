@@ -43,3 +43,21 @@
     display: block;
     margin-bottom: 6px;
   }
+
+
+  .paragraph {
+    margin-bottom: 40px;
+    margin-top: 10px;
+    margin-left: 0px;
+    margin-right: 0px
+  }
+
+  
+
+  #messageContainer {
+    color:#994721;
+    font-size: medium;
+    margin-bottom: 5px;
+    margin-left: 5px;
+    font-style: italic;
+  }
