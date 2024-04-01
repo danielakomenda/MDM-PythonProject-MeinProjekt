@@ -40,11 +40,9 @@ jobs:
           registryPassword: ${{ secrets.MDMPYTHONPROJECT_REGISTRY_PASSWORD }}
           containerAppName: mdm-python-project
           resourceGroup: mdm-python-project
-          imageToBuild: registry-1.docker.io/mdm-python-project:${{ github.sha }}
+          imageToBuild: docker.io/komendan/mdm-python-project:${{ github.sha }}
           environmentVariables: >-
             MONGODB_URI=secretref:mongodburi
             AZURE_STORAGE_CONNECTION_STRING=secretref:storage
-          _buildArgumentsKey_: |
-            _buildArgumentsValues_
 
 
