@@ -6,7 +6,7 @@ import dotenv
 from azure.storage.blob import BlobServiceClient
 
 
-model_directory = Path("data/models").resolve()
+model_directory = Path("./data/models").resolve()
 
 
 dotenv.load_dotenv()

@@ -9,24 +9,33 @@ on:
       - 'src/mdm_python/data_preparation/model_create.py' # Changes in the File
       
 jobs:
-  CreateAndStoreModel:
+  preparation:
+    name: Preparation
     runs-on: ubuntu-latest
-    env:
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
-      AZURE_STORAGE_CONNECTION_STRING: ${{secrets.AZURE_STORAGE_CONNECTION_STRING}}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
-        
+          python-version: '3.12'   
       - run: pip install -r requirements.txt
-
       - run: pip install .
 
-      - name: Create Model
-        run: python -m mdm_python.data_preparation.model_create
-      
+  create_model:
+    name: Create Model
+    needs: preparation
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create Model
+      run: python -m mdm_python.data_preparation.model_create
+
+  deploy_to_azure:
+    name: Store model
+    needs: create_model
+    runs-on: ubuntu-latest
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      AZURE_STORAGE_CONNECTION_STRING: ${{secrets.AZURE_STORAGE_CONNECTION_STRING}}
+    steps:  
       - name: Store Model to Azure
         run: python -m mdm_python.data_preparation.model_save
