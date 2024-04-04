@@ -115,7 +115,7 @@ def load_models():
 @app.route("/energy-prediction", methods=["POST", "GET"])
 def energy_predict():
     
-    message = "Checkpoint""
+    message = "Checkpoint"
     energy_types = request.json.get("types", [])
     forecast_horizon = int(request.json.get("forecastHorizon", 1))
     
