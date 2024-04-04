@@ -116,7 +116,6 @@ def load_models():
 @app.route("/energy-prediction", methods=["POST"])
 def energy_predict():
     global energy_models
-    energy_data = db_entsoe.extract_daily_energy()
     energy_types = request.json.get("types", [])
     forecast_horizon = int(request.json.get("forecastHorizon", 1))
     
@@ -124,8 +123,7 @@ def energy_predict():
         energy_models = load_models()
 
     plots = plot_forecast.plot_forecast(
-        energy_data, energy_types, energy_models, forecast_horizon
-    )
+        energy_models, energy_types, forecast_horizon)
 
     return plots
 
