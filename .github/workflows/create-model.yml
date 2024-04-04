@@ -6,7 +6,7 @@ on:
     - cron: '0 22 * * 0' # Once a week
   push:
     paths:
-      - 'src/mdm_python/data/model_create.py' # Changes in the File
+      - 'src/mdm_python/data_preparation/model_create.py' # Changes in the File
       
 jobs:
   CreateAndStoreModel:
@@ -25,7 +25,7 @@ jobs:
       - run: pip install .
 
       - name: Create Model
-        run: python -m mdm_python.data.model_create
+        run: python -m mdm_python.data_preparation.model_create
       
       - name: Store Model to Azure
-        run: python -m mdm_python.data.model_save
+        run: python -m mdm_python.data_preparation.model_save
