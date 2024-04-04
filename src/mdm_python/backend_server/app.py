@@ -112,8 +112,10 @@ def load_models():
     return models
 
 
-@app.route("/energy-prediction", methods=["POST"])
+@app.route("/energy-prediction", methods=["POST", "GET"])
 def energy_predict():
+    
+    message = "Checkpoint""
     energy_types = request.json.get("types", [])
     forecast_horizon = int(request.json.get("forecastHorizon", 1))
     
@@ -127,7 +129,7 @@ def energy_predict():
         forecast_horizon,
     )
 
-    return plots
+    return message
 
 
 if __name__ == "__main__":
