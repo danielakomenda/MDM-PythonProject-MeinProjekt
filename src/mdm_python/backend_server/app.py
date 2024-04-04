@@ -107,9 +107,7 @@ def load_models():
         print("\t" + blob.name)
         content = container_client.download_blob(blob.name).readall()
         model = pickle.loads(content)
-        models[blob.name] = model
-
-    print(models)
+        models[blob.name]=model
     return models
 
 
@@ -123,7 +121,10 @@ def energy_predict():
         energy_models = load_models()
 
     plots = plot_forecast.plot_forecast(
-        energy_models, energy_types, forecast_horizon)
+        energy_models,
+        energy_types,
+        forecast_horizon,
+    )
 
     return plots
 

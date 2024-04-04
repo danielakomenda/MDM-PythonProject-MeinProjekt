@@ -23,7 +23,5 @@ jobs:
         
       - run: pip install -r requirements.txt
       - run: pip install .
-      - name: Create Model
+      - name: Create Model and Store to Azure
         run: python -m mdm_python.data_preparation.model_create
-      - name: Store Model to Azure
-        run: python -m mdm_python.data_preparation.model_save
