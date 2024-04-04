@@ -16,7 +16,7 @@ from statsmodels.tools.sm_exceptions import ValueWarning, ConvergenceWarning
 
 import mdm_python.data_preparation.db_entsoe as db_entsoe
 
-model_directory = Path("../../../data/models").resolve()
+model_directory = Path("./data/models").resolve()
 
 
 def prepare_raw_data(data: pd.DataFrame) -> dict:
