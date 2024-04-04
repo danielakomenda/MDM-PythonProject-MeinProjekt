@@ -28,7 +28,7 @@ def plot_forecast(models, energy_types, forecast_horizon):
         ax.set_title(values.name)
             
         # Plot data points
-        plot_start = series.index[-1] - pd.Timedelta(days=500)
+        plot_start = series.index[-1] - pd.Timedelta(days=1000)
         series.loc[plot_start:].plot(ax=ax, label='Observed')  # Pandas plotting
         
         # Plot predictions

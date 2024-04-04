@@ -121,7 +121,7 @@ def stacked_area_plot(data_hourly, data_daily):
     colors = "#D55E00 #F0E442 #BBBBBB #009E73 #0072B2 #56B4E9".split()
 
     middle = len(data_hourly) // 2
-    selection_range = 500
+    selection_range = 5000
 
     # Range-Plot
     range_plot = bokeh.plotting.figure(
