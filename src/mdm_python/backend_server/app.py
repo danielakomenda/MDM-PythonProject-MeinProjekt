@@ -12,9 +12,9 @@ import markupsafe
 from azure.storage.blob import BlobServiceClient
 from flask import Flask, render_template, request
 
-import mdm_python.data.db_entsoe as db_entsoe
-import mdm_python.data.plot_historic as plot_historic
-import mdm_python.data.plot_forecast as plot_forecast
+import mdm_python.data_preparation.db_entsoe as db_entsoe
+import mdm_python.data_preparation.plot_historic as plot_historic
+import mdm_python.data_preparation.plot_forecast as plot_forecast
 
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)

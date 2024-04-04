@@ -5,42 +5,54 @@ from pathlib import Path
 import pandas as pd
 from matplotlib.figure import Figure
 
-import mdm_python.data.db_entsoe as db_entsoe
-import mdm_python.data.model_create as energy_model
 
-
-model_directory = Path("../data/models").resolve()
 plot_directory = Path("../src/mdm_python/backend_server/static/pictures").resolve()
 
 
-def energy_forecast(raw_data, energy_type, model, forecast_horizon):
+def plot_forecast(models, energy_types, forecast_horizon):
+    
+    plots = dict()
+    forecast_dataset = dict()
+    
+    for name in energy_types:
+        forecast_dataset[name] = models[name.lower()]
+    
+    for name, values in forecast_dataset.items():
+        series = values.transformed_values    
+        forecast = values.production_model.apply(series).get_forecast(steps=forecast_horizon)
+        forecast_ci = forecast.conf_int()
+        
+        # Graph
+        fig = Figure(figsize=(10, 6))
+        ax = fig.subplots()
+        ax.set_title(values.name)  # Corrected
+            
+        # Plot data points
+        plot_start = series.index[-1] - pd.Timedelta(days=500)
+        series.loc[plot_start:].plot(ax=ax, label='Observed')  # Pandas plotting
+        
+        # Plot predictions
+        mean = pd.concat([series.iloc[-1:], forecast.predicted_mean])
+        lo = pd.concat([series.iloc[-1:], forecast_ci.iloc[:, 0]])
+        hi = pd.concat([series.iloc[-1:], forecast_ci.iloc[:, 1]])
+        mean.plot(ax=ax, style='g', label=f'Forecast')  # Pandas plotting
+        ax.fill_between(lo.index, lo, hi, color='g', alpha=0.1)
+        
+        ax.legend(loc='lower right')
+        ax.grid(True)
 
-    data_set = energy_model.prepare_raw_data(raw_data)
-    data_set = energy_model.detrend_and_deseasonalize_data(data_set)
+        buf = BytesIO()
+        fig.savefig(buf, format="png", bbox_inches='tight')  # Ensure layout is tight
+        # Embed the result in the html output
+        data = base64.b64encode(buf.getbuffer()).decode("ascii")
 
-    p, d, q = model.order
+        plots[name] = f"data:image/png;base64,{data}"
 
-    modelling = energy_model.ARIMA_model(
-        data_set[energy_type].detrended_values, p, 0, q
-    )
-    forecast = modelling.get_forecast(steps=forecast_horizon).summary_frame()
+    return plots
 
-    baseline = data_set[energy_type].baseline.iloc[-1]
 
-    offset = data_set[energy_type].offset
-    untransform = lambda v: 10 ** (v - offset) if offset is not None else v
 
-    forecast_df = pd.DataFrame(
-        index=forecast.index,
-        data={
-            energy_type: untransform(forecast["mean"] + baseline),
-            f"lower_{energy_type}": untransform(forecast["mean_ci_lower"] + baseline),
-            f"upper_{energy_type}": untransform(forecast["mean_ci_upper"] + baseline),
-        },
-    )
-
-    return forecast_df
-
+"""
 
 def plot_forecast(raw_data, energy_types, models, forecast_horizon):
     plots = {}
@@ -96,3 +108,5 @@ def plot_forecast(raw_data, energy_types, models, forecast_horizon):
         plots[energy_type] = f"data:image/png;base64,{data}"
 
     return plots
+
+"""

@@ -1,12 +1,13 @@
 import os
+import pickle
 from pathlib import Path
 
 import dotenv
 from azure.storage.blob import BlobServiceClient
 
 
-
 model_directory = Path("data/models").resolve()
+
 
 dotenv.load_dotenv()
 azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
@@ -41,14 +42,13 @@ if not exists:
     container_client = blob_service_client.create_container(container_name)
 
 
-
 models = dict(
-    nuclear_model=model_directory / "nuclear.pickle",
-    solar_model=model_directory / "solar.pickle",
-    water_pump_model=model_directory / "water_pump.pickle",
-    water_reservoir_model=model_directory / "water_reservoir.pickle",
-    water_river_model=model_directory / "water_river.pickle",
-    wind_model=model_directory / "wind.pickle",
+    nuclear_model=model_directory / "model_nuclear.pickle",
+    solar_model=model_directory / "model_solar.pickle",
+    water_pump_model=model_directory / "model_water_pump.pickle",
+    water_reservoir_model=model_directory / "model_water_reservoir.pickle",
+    water_river_model=model_directory / "model_water_river.pickle",
+    wind_model=model_directory / "model_wind.pickle",
 )
 
 for model, file_path in models.items():
