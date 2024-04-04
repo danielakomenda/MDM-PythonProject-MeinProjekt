@@ -108,17 +108,18 @@ def load_models():
         content = container_client.download_blob(blob.name).readall()
         model = pickle.loads(content)
         models[blob.name]=model
+    
     return models
 
 
 @app.route("/energy-prediction", methods=["POST"])
 def energy_predict():
-    global energy_models
     energy_types = request.json.get("types", [])
     forecast_horizon = int(request.json.get("forecastHorizon", 1))
     
-    if energy_models is None:
-        energy_models = load_models()
+    energy_models = load_models()
+    energy_types = ["wind", "nuclear"]
+    forecast_horizon = 30
 
     plots = plot_forecast.plot_forecast(
         energy_models,
