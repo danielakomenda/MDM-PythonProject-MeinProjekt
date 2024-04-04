@@ -141,7 +141,7 @@
         const data = await response.json();
 
         messageContainer.innerText = "";
-        displayPlots(data);
+        displayPlots(data.plots);
       } catch (error) {
         // If an error occurs, display it
         messageContainer.innerText =

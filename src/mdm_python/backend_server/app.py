@@ -114,22 +114,25 @@ def load_models():
 
 @app.route("/energy-prediction", methods=["POST", "GET"])
 def energy_predict():
-    
-    message = "Checkpoint"
-    energy_types = request.json.get("types", [])
-    forecast_horizon = int(request.json.get("forecastHorizon", 1))
-    
-    energy_models = load_models()
-    energy_types = ["wind", "nuclear"]
-    forecast_horizon = 30
+    global energy_models
+   
+    try:
+        energy_types = request.json.get("types", [])
+        forecast_horizon = int(request.json.get("forecastHorizon", 1))
+        
+        if energy_models is None:
+            energy_models = load_models()
 
-    plots = plot_forecast.plot_forecast(
-        energy_models,
-        energy_types,
-        forecast_horizon,
-    )
+        plots = plot_forecast.plot_forecast(
+            energy_models,
+            energy_types,
+            forecast_horizon,
+        )
+    except Exception as ex:
+        import traceback
+        return dict(error=repr(ex), traceback=traceback.format_exc())
 
-    return message
+    return dict(plots=plots)
 
 
 if __name__ == "__main__":
