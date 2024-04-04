@@ -15,7 +15,7 @@ def plot_forecast(models, energy_types, forecast_horizon):
     forecast_dataset = dict()
     
     for name in energy_types:
-        forecast_dataset[name] = models[name.lower()]
+        forecast_dataset[name] = models[f'{name.lower()}.pickle']
     
     for name, values in forecast_dataset.items():
         series = values.transformed_values    

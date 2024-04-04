@@ -107,7 +107,7 @@ def load_models():
         print("\t" + blob.name)
         content = container_client.download_blob(blob.name).readall()
         model = pickle.loads(content)
-        models[blob.name] = model["model"]
+        models[blob.name] = model
 
     print(models)
     return models
