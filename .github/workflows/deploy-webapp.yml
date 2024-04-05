@@ -4,6 +4,9 @@ on:
   push:
     branches:
         - 'main'
+    paths:
+      - 'src/' # Changes in the File
+
   workflow_dispatch:
 
 jobs:
